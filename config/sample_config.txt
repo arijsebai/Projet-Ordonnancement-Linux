@@ -1,0 +1,15 @@
+# Sample file : 7 processus pour tests
+# Format : name arrival exec_time priority
+
+P1 0 20 3 # priorité 1 # ligne contenant seulement des tabulations et un commentaire
+
+P2 10 12 2
+# court job
+P3 10 6 4 
+P3 5 15 BadLine 5 # ligne incomplète (moins d'infos) 
+
+P4 20 18 1
+P5 5 5 5
+
+P6 25 10 2
+P7 30 9 3
