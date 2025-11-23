@@ -10,6 +10,6 @@ void run_scheduler(struct process *list, int n, int policy);
 void fifo_simulation(struct process *p, int n);
 void priority_simulation(struct process *p, int n, int prio_mode);
 void rr_simulation(struct process *p, int n);
-
+void multilevel_simulation(struct process *p, int n, int quantum);
 #endif
 

@@ -1,12 +1,9 @@
-
-<<<<<<< HEAD
-=======
 #include "../include/process.h"
+#include "../include/scheduler.h"
 #include <limits.h>
 
 int select_multilevel(struct process *procs, int n, int time, int current, int quantum_expired) {
     int best_prio = -1;
-    int best_index = -1;
 
     // Étape 1 : Trouver la priorité la plus haute disponible (Processus prêts)
     // On suppose ici : Grande valeur = Haute Priorité (ex: 10 > 1)
@@ -50,4 +47,3 @@ int select_multilevel(struct process *procs, int n, int time, int current, int q
 
     return -1;
 }
->>>>>>> balkis-dev

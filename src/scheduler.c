@@ -85,6 +85,13 @@ void run_scheduler(struct process *list, int n, int policy) {
 
     else if (strstr(policies[policy].name, "round"))
         rr_simulation(list, n);
+    else if (strstr(policies[policy].name, "multilevel")) {
+    int q;
+    printf("Quantum pour chaque niveau: ");
+    scanf("%d", &q);
+    multilevel_simulation(list, n, q);
+}
+
 }
 
 /* FIFO */
@@ -206,5 +213,79 @@ void rr_simulation(struct process *p, int n) {
     scanf("%d", &q);
 
     round_robin(p, n, q);
+}
+/* MULTILEVEL */
+extern int select_multilevel(struct process *, int, int, int, int);
+
+void multilevel_simulation(struct process *procs, int n, int quantum) {
+    int finished = 0, time = 0;
+    int current = -1;           // Index du processus en cours
+    int quantum_counter = 0;    // Compteur du quantum
+
+    printf("\n=== MULTI-LEVEL WITH AGING ===\n");
+    printf("Time  Executing  Ready Queue\n");
+    printf("----  ---------  ------------------------------\n");
+
+    while (finished < n) {
+        int idx = select_multilevel(procs, n, time, current, quantum_counter >= quantum);
+
+        // CPU idle
+        if (idx == -1) {
+            printf("%4d  %-9s  []\n", time, "IDLE");
+            time++;
+            quantum_counter = 0;
+            current = -1;
+            continue;
+        }
+
+        // Affichage Gantt
+        printf("%4d  %-9s  [", time, procs[idx].name);
+        int first = 1;
+        for (int i = 0; i < n; i++) {
+            if (i != idx && procs[i].arrival_time <= time && procs[i].remaining_time > 0) {
+                if (!first) printf(", ");
+                printf("%s:%d", procs[i].name, procs[i].remaining_time);
+                first = 0;
+            }
+        }
+        printf("]\n");
+
+        // === Aging
+        for (int i = 0; i < n; i++) {
+            if (i != idx && procs[i].arrival_time <= time && procs[i].remaining_time > 0) {
+                procs[i].priority++;
+                procs[i].waiting_time++;
+            }
+        }
+
+        procs[idx].remaining_time--;
+        current = idx;
+        quantum_counter++;
+
+        if (procs[idx].remaining_time == 0) {
+            procs[idx].end_time = time + 1;
+            finished++;
+            quantum_counter = 0;
+        }
+
+        if (quantum_counter >= quantum) quantum_counter = 0;
+
+        time++;
+    }
+
+    // Final stats (comme FIFO/PRIORITY)
+    float total_wait = 0;
+    int makespan = 0;
+    printf("\nFINAL STATISTICS\n");
+    printf("Name  Arrival  Exec  Finish  Wait\n");
+    for (int i = 0; i < n; i++) {
+        int wait = procs[i].waiting_time;
+        printf("%-4s  %7d  %4d  %6d  %4d\n",
+               procs[i].name, procs[i].arrival_time, procs[i].exec_time, procs[i].end_time, wait);
+        total_wait += wait;
+        if (procs[i].end_time > makespan) makespan = procs[i].end_time;
+    }
+    printf("\nAverage Wait Time: %.2f\n", total_wait / n);
+    printf("Makespan: %d\n", makespan);
 }
 
