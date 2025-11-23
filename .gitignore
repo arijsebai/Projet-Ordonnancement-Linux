@@ -53,3 +53,16 @@ dkms.conf
 
 # debug information files
 *.dwo
+# Build files
+*.o
+*.out
+*.exe
+/bin/
+build/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
