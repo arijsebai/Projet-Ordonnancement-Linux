@@ -1,5 +1,5 @@
+
 #include "../include/process.h"
-#include "../include/scheduler.h"
 #include <limits.h>
 
 int select_multilevel(struct process *procs, int n, int time, int current, int quantum_expired) {

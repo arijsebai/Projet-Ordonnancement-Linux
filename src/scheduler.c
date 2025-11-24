@@ -5,11 +5,16 @@
 #include "../include/scheduler.h"
 #include "../include/process.h"
 
-/* prototypes policies */
+/* ==== PROTOTYPES DES POLITIQUES ==== */
 extern int fifo_scheduler(struct process *, int, int, int, int);
 extern int priority_preemptive(struct process *, int, int, int, int);
 extern void round_robin(struct process *, int, int);
 
+/* Tes nouveaux algos */
+extern int select_multilevel(struct process *, int, int, int, int);
+extern int select_multilevel_dynamic(struct process *, int, int, int, int);
+
+/* ==== LISTE DES POLITIQUES ==== */
 typedef struct {
     char name[100];
 } Policy;
@@ -17,7 +22,9 @@ typedef struct {
 Policy policies[20];
 int policy_count = 0;
 
-/* scan du dossier policies */
+/* ============================================================
+   ==========     CHARGEMENT DYNAMIQUE DES POLITIQUES     =====
+   ============================================================ */
 void load_policies() {
     DIR *d = opendir("policies");
     if (!d) {
@@ -35,18 +42,18 @@ void load_policies() {
     closedir(d);
 }
 
-/* menu dynamique */
+/* ===================== MENU ====================== */
 int choose_policy() {
     printf("\n=== Choisir une politique ===\n");
 
     for (int i = 0; i < policy_count; i++)
         printf("%d - %s\n", i, policies[i].name);
 
-    printf("Choix [Entrée pour FIFO par défaut] : ");
+    printf("Choix [Entrée → FIFO] : ");
 
     char line[10];
     if (!fgets(line, sizeof(line), stdin) || line[0] == '\n') {
-        // par défaut : FIFO
+        
         for (int i = 0; i < policy_count; i++) {
             if (strstr(policies[i].name, "fifo"))
                 return i;
@@ -59,42 +66,11 @@ int choose_policy() {
     return c;
 }
 
-/* lancement simulation */
-void run_scheduler(struct process *list, int n, int policy) {
+/* ============================================================
+                  SIMULATIONS DES POLITIQUES
+   ============================================================ */
 
-    if (strstr(policies[policy].name, "fifo"))
-        fifo_simulation(list, n);
-
-    else if (strstr(policies[policy].name, "priority")) {
-        // Choix ASC ou DESC
-        printf("Sélection de l’ordre de priorité:\n");
-        printf("  [1] DESCENDING → Higher number = Higher priority (DEFAULT)\n");
-        printf("  [2] ASCENDING  → Lower number = Higher priority\n");
-        printf("Votre choix [Entrée pour DESC]: ");
-
-        char choice[10];
-        int prio_mode = 1; // default DESC
-        if (fgets(choice, sizeof(choice), stdin) && choice[0] == '2') {
-            prio_mode = 0;
-        }
-
-        printf("Ordre sélectionné: %s\n", prio_mode ? "DESCENDING" : "ASCENDING");
-
-        priority_simulation(list, n, prio_mode);
-    }
-
-    else if (strstr(policies[policy].name, "round"))
-        rr_simulation(list, n);
-    else if (strstr(policies[policy].name, "multilevel")) {
-    int q;
-    printf("Quantum pour chaque niveau: ");
-    scanf("%d", &q);
-    multilevel_simulation(list, n, q);
-}
-
-}
-
-/* FIFO */
+/* ---------------- FIFO ---------------- */
 void fifo_simulation(struct process *p, int n) {
     printf("\n=== FIFO ===\n");
     printf("Time  Executing  Ready Queue\n");
@@ -123,31 +99,34 @@ void fifo_simulation(struct process *p, int n) {
         }
         printf("]\n");
 
-        // Execution
         time += p[idx].remaining_time;
         p[idx].remaining_time = 0;
-        p[idx].end_time = time; // <-- finish time
+        p[idx].end_time = time;
         finished++;
     }
 
-    // === FINAL STATISTICS ===
     printf("\nFINAL STATISTICS\n");
     printf("Name  Arrival  Exec  Finish  Wait\n");
     float total_wait = 0;
     int makespan = 0;
+
     for (int i = 0; i < n; i++) {
         int wait = p[i].end_time - p[i].arrival_time - p[i].exec_time;
+
         printf("%-4s  %7d  %4d  %6d  %4d\n",
                p[i].name, p[i].arrival_time, p[i].exec_time, p[i].end_time, wait);
+
         total_wait += wait;
         if (p[i].end_time > makespan) makespan = p[i].end_time;
     }
+
     printf("\nAverage Wait Time: %.2f\n", total_wait / n);
     printf("Makespan: %d\n", makespan);
 }
 
 
-void priority_simulation(struct process *p, int n, int prio_mode) {
+ /* ---------------- PRIORITY ---------------- */
+void priority_simulation(struct process *p, int n, int mode) {
     printf("\n=== PRIORITY ===\n");
     printf("Time  Executing  Ready Queue\n");
     printf("----  ---------  ------------------------------\n");
@@ -155,28 +134,27 @@ void priority_simulation(struct process *p, int n, int prio_mode) {
     int finished = 0, time = 0;
 
     while (finished < n) {
-        int idx = priority_preemptive(p, n, time, -1, prio_mode);
+        int idx = priority_preemptive(p, n, time, -1, mode);
 
         if (idx == -1) {
-            printf("%4d  %-9s  []\n", time, "IDLE");
+            printf("%4d IDLE []\n", time);
             time++;
             continue;
         }
 
-        printf("%4d  %-9s  [", time, p[idx].name);
+        printf("%4d %-10s [", time, p[idx].name);
 
-        int first = 1;
+        int f = 1;
         for (int i = 0; i < n; i++) {
             if (i != idx && p[i].arrival_time <= time && p[i].remaining_time > 0) {
-                if (!first) printf(", ");
+                if (!f) printf(", ");
                 printf("%s:%d", p[i].name, p[i].remaining_time);
-                first = 0;
+                f = 0;
             }
         }
         printf("]\n");
 
         p[idx].remaining_time--;
-        // waiting time pour les autres
         for (int i = 0; i < n; i++) {
             if (i != idx && p[i].arrival_time <= time && p[i].remaining_time > 0)
                 p[i].waiting_time++;
@@ -189,47 +167,125 @@ void priority_simulation(struct process *p, int n, int prio_mode) {
         }
     }
 
-    // === FINAL STATISTICS ===
+    // Stats
     printf("\nFINAL STATISTICS\n");
     printf("Name  Arrival  Exec  Finish  Wait\n");
-    float total_wait = 0;
+
+    float tw = 0;
     int makespan = 0;
+
     for (int i = 0; i < n; i++) {
-        int wait = p[i].waiting_time; // déjà calculé
-        printf("%-4s  %7d  %4d  %6d  %4d\n",
-               p[i].name, p[i].arrival_time, p[i].exec_time, p[i].end_time, wait);
-        total_wait += wait;
+        printf("%-4s %7d %4d %6d %4d\n",
+               p[i].name, p[i].arrival_time, p[i].exec_time,
+               p[i].end_time, p[i].waiting_time);
+        tw += p[i].waiting_time;
         if (p[i].end_time > makespan) makespan = p[i].end_time;
     }
-    printf("\nAverage Wait Time: %.2f\n", total_wait / n);
+
+    printf("\nAverage Wait Time: %.2f\n", tw / n);
     printf("Makespan: %d\n", makespan);
 }
 
 
-/* Round robin */
+/* ---------------- ROUND ROBIN ---------------- */
 void rr_simulation(struct process *p, int n) {
     int q;
     printf("Quantum: ");
     scanf("%d", &q);
-
     round_robin(p, n, q);
 }
-/* MULTILEVEL */
-extern int select_multilevel(struct process *, int, int, int, int);
 
+
+/* ============================================================
+                        MULTI-LEVEL
+   ============================================================ */
 void multilevel_simulation(struct process *procs, int n, int quantum) {
     int finished = 0, time = 0;
-    int current = -1;           // Index du processus en cours
-    int quantum_counter = 0;    // Compteur du quantum
+    int current = -1;
+    int quantum_counter = 0;
 
-    printf("\n=== MULTI-LEVEL WITH AGING ===\n");
-    printf("Time  Executing  Ready Queue\n");
-    printf("----  ---------  ------------------------------\n");
+    printf("\n=== MULTI-LEVEL STATIC + AGING ===\n");
 
     while (finished < n) {
         int idx = select_multilevel(procs, n, time, current, quantum_counter >= quantum);
 
-        // CPU idle
+        if (idx == -1) {
+            printf("%4d IDLE []\n", time);
+            current = -1;
+            quantum_counter = 0;
+            time++;
+            continue;
+        }
+
+        printf("%4d %-8s [", time, procs[idx].name);
+        int f = 1;
+        for (int i = 0; i < n; i++) {
+            if (i != idx && procs[i].arrival_time <= time && procs[i].remaining_time > 0) {
+                if (!f) printf(", ");
+                printf("%s:%d", procs[i].name, procs[i].remaining_time);
+                f = 0;
+            }
+        }
+        printf("]\n");
+
+        for (int i = 0; i < n; i++)
+            if (i != idx && procs[i].arrival_time <= time && procs[i].remaining_time > 0)
+                procs[i].waiting_time++;
+
+        procs[idx].remaining_time--;
+        current = idx;
+        quantum_counter++;
+
+        if (procs[idx].remaining_time == 0) {
+            procs[idx].end_time = time + 1;
+            finished++;
+            quantum_counter = 0;
+        }
+
+        if (quantum_counter >= quantum)
+            quantum_counter = 0;
+
+        time++;
+    }
+
+    // Stats
+    printf("\nFINAL STATISTICS\n");
+    /* <-- MODIF : on affiche aussi la priorité finale ici */
+    printf("Name  Arrival  Exec  Finish  Wait  Priority\n");
+    float tw = 0;
+    int makespan = 0;
+
+    for (int i = 0; i < n; i++) {
+        printf("%-4s %7d %4d %6d %4d %4d\n",
+               procs[i].name, procs[i].arrival_time,
+               procs[i].exec_time, procs[i].end_time,
+               procs[i].waiting_time,
+               procs[i].priority); /* ← priorité finale affichée */
+        tw += procs[i].waiting_time;
+        if (procs[i].end_time > makespan) makespan = procs[i].end_time;
+    }
+
+    printf("\nAverage Wait Time: %.2f\n", tw / n);
+    printf("Makespan: %d\n", makespan);
+}
+
+
+ /* ============================================================
+                    MULTI-LEVEL DYNAMIC
+   ============================================================ */
+
+void multilevel_dynamic_simulation(struct process *procs, int n, int quantum) {
+    int finished = 0, time = 0;
+    int current = -1;           
+    int quantum_counter = 0;    
+
+    printf("\n=== MULTI-LEVEL DYNAMIC ===\n");
+    printf("Time  Executing  Ready Queue\n");
+    printf("----  ---------  ------------------------------\n");
+
+    while (finished < n) {
+        int idx = select_multilevel_dynamic(procs, n, time, current, quantum_counter >= quantum);
+
         if (idx == -1) {
             printf("%4d  %-9s  []\n", time, "IDLE");
             time++;
@@ -238,7 +294,6 @@ void multilevel_simulation(struct process *procs, int n, int quantum) {
             continue;
         }
 
-        // Affichage Gantt
         printf("%4d  %-9s  [", time, procs[idx].name);
         int first = 1;
         for (int i = 0; i < n; i++) {
@@ -250,10 +305,10 @@ void multilevel_simulation(struct process *procs, int n, int quantum) {
         }
         printf("]\n");
 
-        // === Aging
+        /* Aging dynamique */
         for (int i = 0; i < n; i++) {
             if (i != idx && procs[i].arrival_time <= time && procs[i].remaining_time > 0) {
-                procs[i].priority++;
+                procs[i].priority++;       // montée dynamique
                 procs[i].waiting_time++;
             }
         }
@@ -268,24 +323,73 @@ void multilevel_simulation(struct process *procs, int n, int quantum) {
             quantum_counter = 0;
         }
 
-        if (quantum_counter >= quantum) quantum_counter = 0;
+        if (quantum_counter >= quantum)
+            quantum_counter = 0;
 
         time++;
     }
 
-    // Final stats (comme FIFO/PRIORITY)
+    /* === STATISTIQUES FINALES AVEC PRIORITÉ === */
     float total_wait = 0;
     int makespan = 0;
+
     printf("\nFINAL STATISTICS\n");
-    printf("Name  Arrival  Exec  Finish  Wait\n");
+    printf("Name  Arrival  Exec  Finish  Wait  Final_Prio\n");
+
     for (int i = 0; i < n; i++) {
         int wait = procs[i].waiting_time;
-        printf("%-4s  %7d  %4d  %6d  %4d\n",
-               procs[i].name, procs[i].arrival_time, procs[i].exec_time, procs[i].end_time, wait);
+        printf("%-4s  %7d  %4d  %6d  %4d  %10d\n",
+               procs[i].name,
+               procs[i].arrival_time,
+               procs[i].exec_time,
+               procs[i].end_time,
+               wait,
+               procs[i].priority);  // ← ← ICI NOUVELLE PRIORITÉ
         total_wait += wait;
-        if (procs[i].end_time > makespan) makespan = procs[i].end_time;
+
+        if (procs[i].end_time > makespan)
+            makespan = procs[i].end_time;
     }
+
     printf("\nAverage Wait Time: %.2f\n", total_wait / n);
     printf("Makespan: %d\n", makespan);
+}
+
+
+
+ /* ============================================================
+                     CHOIX DE LA POLITIQUE
+   ============================================================ */
+void run_scheduler(struct process *list, int n, int policy) {
+
+    if (strstr(policies[policy].name, "fifo"))
+        fifo_simulation(list, n);
+
+    else if (strstr(policies[policy].name, "priority")) {
+        printf("Ordre priorité: [1] DESC (defaut), [2] ASC: ");
+        char line[10];
+        int mode = 1;
+        if (fgets(line, sizeof(line), stdin) && line[0] == '2')
+            mode = 0;
+
+        priority_simulation(list, n, mode);
+    }
+
+    else if (strstr(policies[policy].name, "round"))
+        rr_simulation(list, n);
+
+    else if (strstr(policies[policy].name, "multilevel_dynamic")) {
+        int q;
+        printf("Quantum: ");
+        scanf("%d", &q);
+        multilevel_dynamic_simulation(list, n, q);
+    }
+
+    else if (strstr(policies[policy].name, "multilevel")) {
+        int q;
+        printf("Quantum: ");
+        scanf("%d", &q);
+        multilevel_simulation(list, n, q);
+    }
 }
 
