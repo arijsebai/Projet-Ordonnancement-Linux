@@ -392,4 +392,20 @@ void run_scheduler(struct process *list, int n, int policy) {
         multilevel_simulation(list, n, q);
     }
 }
+void display_config_file(const char *filename) {
+    FILE *f = fopen(filename, "r");
+    if (!f) {
+        perror("Impossible d'ouvrir le fichier de configuration");
+        return;
+    }
 
+    printf("\n=== Contenu du fichier de configuration (%s) ===\n", filename);
+
+    char line[256];
+    while (fgets(line, sizeof(line), f)) {
+        printf("%s", line);
+    }
+    printf("============================================\n\n");
+
+    fclose(f);
+}
