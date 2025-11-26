@@ -9,6 +9,7 @@
 extern int fifo_scheduler(struct process *, int, int, int, int);
 extern int priority_preemptive(struct process *, int, int, int, int);
 extern void round_robin(struct process *, int, int);
+extern void srt_simulation(struct process *, int);
 
 /* Tes nouveaux algos */
 extern int select_multilevel(struct process *, int, int, int, int);
@@ -384,6 +385,8 @@ void run_scheduler(struct process *list, int n, int policy) {
         scanf("%d", &q);
         multilevel_dynamic_simulation(list, n, q);
     }
+    else if (strstr(policies[policy].name, "srt"))
+        srt_simulation(list, n);
 
     else if (strstr(policies[policy].name, "multilevel")) {
         int q;
@@ -408,4 +411,96 @@ void display_config_file(const char *filename) {
     printf("============================================\n\n");
 
     fclose(f);
+}
+void srt_simulation(struct process *procs, int n) {
+    // Create a copy to avoid modifying original processes
+    struct process *p = malloc(n * sizeof(struct process));
+    memcpy(p, procs, n * sizeof(struct process));
+
+    // Initialize remaining time and end time
+    for (int i = 0; i < n; i++) {
+        p[i].remaining_time = p[i].exec_time;
+        p[i].end_time = -1;
+        p[i].waiting_time = 0;
+    }
+
+    int time = 0;
+    int completed = 0;
+
+    printf("\n=== SHORTEST REMAINING TIME FIRST (SRT) ===\n");
+    printf("Time  Executing     Ready Queue\n");
+    printf("----  -----------  -----------------------------\n");
+
+    while (completed < n) {
+        int idx = -1;
+        int min_rem = 999999;
+
+        // Find process with shortest remaining time that has arrived
+        for (int i = 0; i < n; i++) {
+            if (p[i].arrival_time <= time && p[i].remaining_time > 0) {
+                if (p[i].remaining_time < min_rem ||
+                    (p[i].remaining_time == min_rem && p[i].arrival_time < p[idx].arrival_time)) {
+                    min_rem = p[i].remaining_time;
+                    idx = i;
+                }
+            }
+        }
+
+        if (idx == -1) {
+            // No process ready → IDLE
+            printf("%4d  [IDLE]       []\n", time);
+            time++;
+            continue;
+        }
+
+        // Print executing process and ready queue
+        printf("%4d  %-8s    [", time, p[idx].name);
+        int first = 1;
+        for (int i = 0; i < n; i++) {
+            if (i != idx && p[i].arrival_time <= time && p[i].remaining_time > 0) {
+                if (!first) printf(", ");
+                printf("%s:%d", p[i].name, p[i].remaining_time);
+                first = 0;
+            }
+        }
+        printf("]\n");
+
+        // Execute 1 unit of time
+        p[idx].remaining_time--;
+        time++;
+
+        // If finished
+        if (p[idx].remaining_time == 0) {
+            p[idx].end_time = time;
+            completed++;
+        }
+
+        // Increase waiting time for other ready processes
+        for (int i = 0; i < n; i++) {
+            if (i != idx && p[i].arrival_time <= time && p[i].remaining_time > 0)
+                p[i].waiting_time++;
+        }
+    }
+
+    // Final statistics
+    printf("\nFINAL STATISTICS\n");
+    printf("Name  Arrival  Exec  Finish  Wait\n");
+
+    float total_wait = 0.0f;
+    int makespan = 0;
+
+    for (int i = 0; i < n; i++) {
+        int wait = p[i].waiting_time;
+        total_wait += wait;
+        if (p[i].end_time > makespan) makespan = p[i].end_time;
+
+        printf("%-4s  %7d  %4d  %6d  %4d\n",
+               p[i].name, p[i].arrival_time, p[i].exec_time,
+               p[i].end_time, wait);
+    }
+
+    printf("\nAverage Wait Time: %.2f\n", total_wait / n);
+    printf("Makespan: %d\n", makespan);
+
+    free(p);
 }
