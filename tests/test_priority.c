@@ -4,7 +4,7 @@
 #include "../include/process.h"
 
 // Scheduling function from policies/priority.c
-int select_priority_preemptive(struct process *procs, int n, int time, int current, int prio_mode);
+int priority_preemptive(struct process *procs, int n, int time, int current, int prio_mode);
 extern int global_prio_mode;  // 1 = descending (default), 0 = ascending
 
 // Compare processes for qsort (ready queue sorting)
@@ -36,7 +36,7 @@ int main() {
     }
     printf("\n");
 
-    // === PRIORITY ORDER SELECTION ===
+    // === PRIORITY ORDER ION ===
     char choice[10];
     int prio_mode = 1;  // default: descending
 
@@ -84,7 +84,7 @@ int main() {
         }
 
         // Select next process
-        int next = select_priority_preemptive(procs, n, time, -1, prio_mode);
+        int next = priority_preemptive(procs, n, time, -1, prio_mode);
         printf("  %5d  %-9s  [", time, next != -1 ? procs[next].name : "IDLE");
 
         // Build and sort ready queue
