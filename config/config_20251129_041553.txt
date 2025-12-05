@@ -1,0 +1,7 @@
+# Auto-generated file – 4 random processes
+# Params: arrival[0-7], priority[1-9], exec[1-9]
+
+P1 4 2 7
+P2 5 3 1
+P3 3 6 8
+P4 4 9 9

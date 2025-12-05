@@ -4,7 +4,6 @@
 
 int select_multilevel(struct process *procs, int n, int time, int current, int quantum_expired) {
     int best_prio = -1;
-    int best_index = -1;
 
     // Étape 1 : Trouver la priorité la plus haute disponible (Processus prêts)
     // On suppose ici : Grande valeur = Haute Priorité (ex: 10 > 1)

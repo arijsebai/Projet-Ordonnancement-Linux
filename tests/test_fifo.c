@@ -4,7 +4,7 @@
 #include "../include/process.h" 
 
 // Déclaration de notre fonction de sélection qui se trouve dans fifo.c
-int select_fifo(struct process *procs, int n, int time, int current, int prio_mode);
+int fifo_scheduler(struct process *procs, int n, int time, int current, int prio_mode);
 
 // Fonction de comparaison pour qsort (pour trier l'affichage de la file d'attente)
 int compare_arrival(const void *a, const void *b) {
@@ -63,7 +63,7 @@ int main() {
 
         // Sélectionner le prochain processus en utilisant la logique FIFO
         // On passe 0 et -1 pour les arguments non utilisés
-        int next = select_fifo(procs, n, time, -1, 0); 
+        int next = fifo_scheduler(procs, n, time, -1, 0); 
         
         printf("  %5d  %-9s   [", time, next != -1 ? procs[next].name : "IDLE");
 

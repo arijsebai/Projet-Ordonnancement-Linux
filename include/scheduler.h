@@ -1,0 +1,18 @@
+#ifndef SCHEDULER_H
+#define SCHEDULER_H
+
+#include "process.h"
+
+void load_policies();
+int choose_policy();
+void run_scheduler(struct process *list, int n, int policy);
+
+/* Simulations */
+void fifo_simulation(struct process *p, int n);
+void priority_simulation(struct process *p, int n, int prio_mode);
+void rr_simulation(struct process *p, int n);
+void multilevel_simulation(struct process *p, int n, int quantum);
+void multilevel_dynamic_simulation(struct process *procs, int n, int q);
+void srt_simulation(struct process *procs, int n);
+#endif
+

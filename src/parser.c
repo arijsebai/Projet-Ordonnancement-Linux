@@ -23,7 +23,7 @@ void sort_by_arrival(struct process *procs, int n) {
 }
 
 /* parse_config : implementation  */
-int parse_config(const char *path, struct process **out, int *out_n) {
+int parse_config_file(const char *path, struct process **out, int *out_n) {
     if (!path || !out || !out_n) return -1;
 
     FILE *f = fopen(path, "r");

@@ -14,10 +14,10 @@ struct process {
     int exec_time;   /* durée totale CPU requise (unités) */
     int priority;   /* priorité statique (plus petit = plus prioritaire) */
     int remaining_time;  /* temps restant (utilisé par ordonnanceurs) */
-
     int waiting_time;
     int status;
     int end_time;
+    int wait_time;   // pour aging dynamique
 };
 
 #endif 
