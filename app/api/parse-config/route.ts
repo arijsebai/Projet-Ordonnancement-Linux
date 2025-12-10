@@ -7,15 +7,39 @@ import { spawn, type ChildProcessWithoutNullStreams } from "child_process"
 export async function POST(req: Request) {
   let tmpPath = ""
   try {
-    const formData = await req.formData()
-    const file = formData.get("file") as File
-    if (!file) {
-      return NextResponse.json({ error: "Aucun fichier fourni" }, { status: 400 })
-    }
+    const contentType = req.headers.get("content-type") || ""
+    let configPath: string | null = null
 
-    const buffer = await file.arrayBuffer()
-    tmpPath = path.join(os.tmpdir(), `config_${Date.now()}_${Math.random().toString(16).slice(2)}.txt`)
-    await fs.writeFile(tmpPath, Buffer.from(buffer))
+    // Vérifier si c'est du FormData (fichier uploadé) ou du JSON (fichier par défaut)
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData()
+      const file = formData.get("file") as File
+      if (!file) {
+        return NextResponse.json({ error: "Aucun fichier fourni" }, { status: 400 })
+      }
+
+      const buffer = await file.arrayBuffer()
+      tmpPath = path.join(os.tmpdir(), `config_${Date.now()}_${Math.random().toString(16).slice(2)}.txt`)
+      await fs.writeFile(tmpPath, Buffer.from(buffer))
+      configPath = tmpPath
+    } else if (contentType.includes("application/json")) {
+      const body = await req.json()
+      if (body?.defaultFile) {
+        configPath = path.join(process.cwd(), "config", body.defaultFile)
+        try {
+          await fs.access(configPath)
+        } catch {
+          return NextResponse.json(
+            { error: `Fichier de configuration par défaut introuvable: ${configPath}` },
+            { status: 400 }
+          )
+        }
+      } else {
+        return NextResponse.json({ error: "Aucun paramètre defaultFile fourni" }, { status: 400 })
+      }
+    } else {
+      return NextResponse.json({ error: "Content-Type non supporté" }, { status: 400 })
+    }
 
     const binaryName = process.platform === "win32" ? "ordonnanceur.exe" : "ordonnanceur"
     const binaryPath = path.join(process.cwd(), binaryName)
@@ -30,7 +54,7 @@ export async function POST(req: Request) {
     }
 
     const output = await new Promise<string>((resolve, reject) => {
-      const child: ChildProcessWithoutNullStreams = spawn(binaryPath, ["--parse-config", tmpPath], {
+      const child: ChildProcessWithoutNullStreams = spawn(binaryPath, ["--parse-config", configPath], {
         stdio: ["ignore", "pipe", "pipe"],
       })
       let stdout = ""

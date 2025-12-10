@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { useEffect, useRef, useState } from "react"
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
-import { RotateCcw, Play, Pause, StepForward, SkipBack } from "lucide-react"
+import { Pause, Play, RotateCcw, SkipBack, StepBack, StepForward } from "lucide-react"
 import type { SchedulingResult } from "@/lib/types"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 interface ResultsDisplayProps {
   results: SchedulingResult
@@ -34,28 +34,33 @@ const PALETTE = [
   "#FACC15",
   "#34D399",
   "#60A5FA",
-] // palette étendue pour garantir des couleurs uniques par processus
-const WAIT_TIME_COLOR = "#00008B" // Dark Blue
-const TOTAL_TIME_COLOR = "#006400" // Dark Green
+]
+
+const WAIT_TIME_COLOR = "#00008B"
+const TOTAL_TIME_COLOR = "#006400"
 
 export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
-  // Use makespan if provided to avoid truncating the axis when segments are partial
   const maxTime = Math.max(results.makespan ?? 0, ...results.ganttData.map((g) => g.end), 1)
-  // Build axis with fixed step=2 as requested (0, 2, 4, ...), always including makespan
+
   const buildTicks = (max: number) => {
-    if (max <= 0) return { ticks: [0], step: 2, end: 0 }
-    const step = 2
+    if (max <= 0) return { ticks: [0], end: 0 }
+    const step = Math.max(1, Math.ceil(max / 10))
     const ticks: number[] = []
     const end = Math.ceil(max / step) * step
     for (let t = 0; t <= end; t += step) ticks.push(t)
-    if (ticks[ticks.length - 1] !== max) ticks.push(max) // ensure the last tick matches the actual makespan
-    return { ticks, step, end: ticks[ticks.length - 1] }
+    if (ticks[ticks.length - 1] !== max) ticks.push(max)
+    return { ticks, end: ticks[ticks.length - 1] }
   }
-  const { ticks: timeTicks, step: timeStep, end: axisEnd } = buildTicks(maxTime)
+  const { ticks: timeTicks, end: axisEnd } = buildTicks(maxTime)
   const minorTicks: number[] = []
+
   const [currentTime, setCurrentTime] = useState(maxTime)
   const [isPlaying, setIsPlaying] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  const [queueTime, setQueueTime] = useState(maxTime)
+  const [isQueuePlaying, setIsQueuePlaying] = useState(false)
+  const queueIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     if (isPlaying) {
@@ -67,7 +72,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
           }
           return prev + 1
         })
-      }, 1000) // 1 second per time unit
+      }, 1000)
     } else if (intervalRef.current) {
       clearInterval(intervalRef.current)
     }
@@ -77,26 +82,63 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
     }
   }, [isPlaying, maxTime])
 
-  const togglePlay = () => {
-    if (currentTime >= maxTime) {
-      setCurrentTime(0)
+  useEffect(() => {
+    if (isQueuePlaying) {
+      queueIntervalRef.current = setInterval(() => {
+        setQueueTime((prev) => {
+          if (prev >= maxTime) {
+            setIsQueuePlaying(false)
+            return maxTime
+          }
+          return prev + 1
+        })
+      }, 1000)
+    } else if (queueIntervalRef.current) {
+      clearInterval(queueIntervalRef.current)
     }
-    setIsPlaying(!isPlaying)
+
+    return () => {
+      if (queueIntervalRef.current) clearInterval(queueIntervalRef.current)
+    }
+  }, [isQueuePlaying, maxTime])
+
+  const togglePlay = () => {
+    if (currentTime >= maxTime) setCurrentTime(0)
+    setIsPlaying((p) => !p)
   }
 
-  const handleNextStep = () => {
-    setCurrentTime((prev) => Math.min(prev + 1, maxTime))
+  const toggleQueuePlay = () => {
+    if (queueTime >= maxTime) setQueueTime(0)
+    setIsQueuePlaying((p) => !p)
   }
 
+  const handleNextStep = () => setCurrentTime((prev) => Math.min(prev + 1, maxTime))
+  const handlePrevStep = () => {
+    setCurrentTime((prev) => Math.max(prev - 1, 0))
+    setIsPlaying(false)
+  }
   const handleResetTime = () => {
     setCurrentTime(0)
     setIsPlaying(false)
   }
 
-  const currentGanttData = results.ganttData.filter((g) => g.start < currentTime)
+  const handleQueueNextStep = () => setQueueTime((prev) => Math.min(prev + 1, maxTime))
+  const handleQueuePrevStep = () => {
+    setQueueTime((prev) => Math.max(prev - 1, 0))
+    setIsQueuePlaying(false)
+  }
+  const handleQueueReset = () => {
+    setQueueTime(0)
+    setIsQueuePlaying(false)
+  }
 
-  // Waiting intervals per process (arrival -> before first run, gaps between runs)
+  const axisSafe = axisEnd || 1
+  const currentLimit = Math.min(Math.max(0, currentTime), axisSafe)
+  const queueCurrentLimit = Math.min(Math.max(0, queueTime), axisSafe)
+
   const waitingSegments = new Map<string, Array<{ start: number; end: number }>>()
+  const arrivalMap = new Map<string, number>()
+  results.processStats.forEach((stat) => arrivalMap.set(stat.id, stat.arrivalTime))
   results.processStats.forEach((stat) => {
     const segs = results.ganttData
       .filter((g) => g.process === stat.id)
@@ -107,16 +149,13 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
       if (s.start > cursor) waits.push({ start: cursor, end: s.start })
       cursor = s.end
     }
-    // Between last segment and finishTime there is no waiting; finishTime should equal last end
     waitingSegments.set(stat.id, waits)
   })
 
-  // Liste des processus uniques pour associer des couleurs déterministes
   const uniqueProcesses = Array.from(
     new Set([...results.ganttData.map((g) => g.process), ...results.processStats.map((s) => s.id)])
   ).sort()
 
-  // Map process -> couleur pour garder la même couleur partout et éviter les doublons
   const colorMap = new Map<string, string>()
   uniqueProcesses.forEach((pid, idx) => {
     const base = idx < PALETTE.length ? PALETTE[idx] : `hsl(${(idx * 137) % 360}deg 70% 45%)`
@@ -124,15 +163,43 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
   })
   const colorFor = (pid: string) => colorMap.get(pid) || PALETTE[0]
 
-  // Prepare pie chart data
-  // Pie chart uses execution time share to show CPU usage percentage per process
+  const cpuSegments = [...results.ganttData].sort((a, b) => a.start - b.start)
+
+  const timeHorizon = Math.max(1, Math.ceil(axisSafe))
+  const queueTimelineRaw: Array<{ time: number; waiting: string[] }> = []
+  for (let t = 0; t < timeHorizon; t++) {
+    const running = cpuSegments.find((seg) => t >= seg.start && t < seg.end)
+    const waiting = results.processStats
+      .filter((stat) => stat.arrivalTime <= t && stat.finishTime > t && (!running || stat.id !== running.process))
+      .map((stat) => stat.id)
+      .sort((a, b) => {
+        const aArr = arrivalMap.get(a) ?? 0
+        const bArr = arrivalMap.get(b) ?? 0
+        if (aArr !== bArr) return aArr - bArr
+        return a.localeCompare(b)
+      })
+    queueTimelineRaw.push({ time: t, waiting })
+  }
+
+  const sameQueue = (a: string[], b: string[]) => a.length === b.length && a.every((v, idx) => v === b[idx])
+  const queueTimeline: Array<{ start: number; end: number; waiting: string[] }> = []
+  for (const entry of queueTimelineRaw) {
+    const last = queueTimeline[queueTimeline.length - 1]
+    if (last && sameQueue(last.waiting, entry.waiting)) {
+      last.end = entry.time + 1
+    } else {
+      queueTimeline.push({ start: entry.time, end: entry.time + 1, waiting: entry.waiting })
+    }
+  }
+
+  const queuePerSecond = queueTimelineRaw
+
   const pieData = results.processStats.map((stat) => ({
     name: stat.id,
     value: stat.executionTime,
     fill: colorFor(stat.id),
   }))
 
-  // Prepare bar chart data
   const barData = results.processStats.map((stat) => ({
     name: stat.id,
     "Temps d'attente": stat.waitTime,
@@ -155,41 +222,11 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            onClick={handleResetTime}
-            variant="outline"
-            className="border-white/50 text-white bg-transparent hover:bg-white hover:text-[#500010]"
-            title="Revenir au début"
-          >
-            <SkipBack className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={togglePlay}
-            variant="outline"
-            className="border-white/50 text-white bg-transparent hover:bg-white hover:text-[#500010]"
-          >
-            {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-            {isPlaying ? "Pause" : "Lecture"}
-          </Button>
-          <Button
-            onClick={handleNextStep}
-            variant="outline"
-            className="border-white/50 text-white bg-transparent hover:bg-white hover:text-[#500010]"
-            disabled={isPlaying || currentTime >= maxTime}
-          >
-            <StepForward className="mr-2 h-4 w-4" />
-            Suivant (+1s)
-          </Button>
-
-          <div className="flex items-center px-4 bg-white/10 rounded-md text-white border border-white/20 min-w-[100px] justify-center font-mono">
-            T = {currentTime}s
-          </div>
-
+        <div className="flex items-center gap-2">
           <Button
             onClick={onReset}
             variant="outline"
-            className="border-white/50 text-white bg-transparent hover:bg-white hover:text-[#500010] transition-colors duration-300 ml-4"
+            className="border-white/50 text-white bg-transparent hover:bg-white hover:text-[#500010] transition-colors duration-300"
           >
             <RotateCcw className="mr-2 h-4 w-4" />
             Nouvelle Simulation
@@ -197,15 +234,218 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
         </div>
       </div>
 
+      {/* Diagramme d'occupation CPU et file d'attente (placé en premier) */}
+      <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-xl w-full">
+        <CardHeader>
+          <CardTitle className="text-black">Diagramme de Gantt</CardTitle>
+          <CardDescription className="text-gray-600">
+            Occupation CPU & File d'attente
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 mb-4">
+            <Button
+              onClick={handleQueueReset}
+              variant="outline"
+              className="border-[#500010] text-[#500010] bg-transparent hover:bg-[#500010] hover:text-white"
+              title="Revenir au début"
+            >
+              <SkipBack className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={toggleQueuePlay}
+              variant="outline"
+              className="border-[#500010] text-[#500010] bg-transparent hover:bg-[#500010] hover:text-white"
+            >
+              {isQueuePlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+              {isQueuePlaying ? "Pause" : "Lecture"}
+            </Button>
+            <Button
+              onClick={handleQueuePrevStep}
+              variant="outline"
+              className="border-[#500010] text-[#500010] bg-transparent hover:bg-[#500010] hover:text-white"
+              disabled={isQueuePlaying || queueTime <= 0}
+            >
+              <StepBack className="mr-2 h-4 w-4" />
+              -1s
+            </Button>
+            <Button
+              onClick={handleQueueNextStep}
+              variant="outline"
+              className="border-[#500010] text-[#500010] bg-transparent hover:bg-[#500010] hover:text-white"
+              disabled={isQueuePlaying || queueTime >= maxTime}
+            >
+              <StepForward className="mr-2 h-4 w-4" />
+              +1s
+            </Button>
+            <div className="flex items-center px-4 bg-[#500010] text-white rounded-md border border-[#500010]/60 min-w-[100px] justify-center font-mono">
+              T = {queueTime}s
+            </div>
+          </div>
+          <div className="relative mt-4 overflow-x-auto">
+            <div className="min-w-[600px] space-y-4">
+              {/* En-tete temps */}
+              <div className="flex ml-16 border-b border-gray-200 pb-2 pr-10">
+                {timeTicks.map((t, idx) => {
+                  const isLast = idx === timeTicks.length - 1
+                  return (
+                    <div
+                      key={`cpu-axis-${idx}`}
+                      className="text-[10px] text-gray-500 text-right border-r border-gray-100 h-2 relative"
+                      style={{
+                        flexBasis: `${(t - (timeTicks[idx - 1] ?? 0)) / axisEnd * 100}%`,
+                        flexGrow: 1,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <span
+                        className={`absolute -bottom-6 left-full ${isLast ? "translate-x-0" : "-translate-x-1/2"} whitespace-nowrap`}
+                      >
+                        {t}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Ligne CPU */}
+              <div className="relative">
+                <div className="absolute inset-0 flex ml-16 pointer-events-none">
+                  {timeTicks.map((t, idx) => (
+                    <div
+                      key={`cpu-grid-${idx}`}
+                      className="border-r border-gray-200 h-full"
+                      style={{
+                        flexBasis: `${(t - (timeTicks[idx - 1] ?? 0)) / axisEnd * 100}%`,
+                        flexGrow: 1,
+                        flexShrink: 0,
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <div className="relative flex items-center h-12 mb-4">
+                  <div className="w-16 font-bold text-gray-700 flex-shrink-0">CPU</div>
+                  <div className="flex-grow h-8 bg-gray-50 rounded-r-lg relative overflow-hidden ml-1">
+                    {cpuSegments.map((seg, idx) => {
+                      const visibleEnd = Math.min(seg.end, queueCurrentLimit)
+                      const widthPercent = ((visibleEnd - seg.start) / axisSafe) * 100
+                      const leftPercent = (seg.start / axisSafe) * 100
+                      if (widthPercent <= 0) return null
+                      return (
+                        <div
+                          key={`cpu-${idx}`}
+                          className="absolute top-1 bottom-1 rounded shadow-md flex items-center justify-center text-xs text-white font-medium"
+                          style={{
+                            left: `${leftPercent}%`,
+                            width: `${widthPercent}%`,
+                            backgroundColor: colorFor(seg.process),
+                          }}
+                          title={`${seg.process}: ${seg.start}s → ${seg.end}s (durée ${seg.duration}s)`}
+                        >
+                          <span className="px-1 overflow-hidden text-ellipsis">{seg.process}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* File d'attente */}
+              <div>
+                <div className="flex items-center gap-2 mb-2 ml-16">
+                  <div className="w-3 h-3 rounded-sm bg-gray-400" />
+                  <span className="text-sm text-gray-700">File d'attente (processus prêts mais non en CPU)</span>
+                </div>
+
+                <div className="relative flex items-center h-20">
+                  <div className="w-16 font-bold text-gray-700 flex-shrink-0">Queue</div>
+                  <div className="flex-grow h-full bg-gray-50 rounded-r-lg relative overflow-hidden ml-1">
+                    {queuePerSecond
+                      .filter((seg) => seg.time < queueCurrentLimit)
+                      .map((seg, idx) => {
+                        const widthPercent = (1 / axisSafe) * 100
+                        const leftPercent = (seg.time / axisSafe) * 100
+                        const hasWaiting = seg.waiting.length > 0
+                        return (
+                          <div
+                            key={`queue-second-${idx}`}
+                            className="absolute top-1 bottom-1 rounded border border-gray-200 bg-white/80 flex flex-col gap-1 items-center justify-start pt-1"
+                            style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
+                            title={hasWaiting ? `T=${seg.time} : ${seg.waiting.join(", ")}` : `T=${seg.time} : file vide`}
+                          >
+                            {hasWaiting ? (
+                              seg.waiting.map((pid) => (
+                                <span
+                                  key={`${pid}-${idx}`}
+                                  className="text-[9px] font-semibold px-1 py-[1px] rounded"
+                                  style={{ backgroundColor: colorFor(pid), color: "#fff" }}
+                                >
+                                  {pid}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-[9px] text-gray-500">∅</span>
+                            )}
+                          </div>
+                        )
+                      })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Gantt Chart */}
       <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-xl">
         <CardHeader>
-          <CardTitle className="text-black">Diagramme de Gantt (Dynamique)</CardTitle>
+          <CardTitle className="text-black">Diagramme de l'état des processus</CardTitle>
           <CardDescription className="text-gray-600">
             Visualisation temporelle de l'exécution des processus
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <Button
+              onClick={handleResetTime}
+              variant="outline"
+              className="border-[#500010] text-[#500010] bg-transparent hover:bg-[#500010] hover:text-white"
+              title="Revenir au début"
+            >
+              <SkipBack className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={togglePlay}
+              variant="outline"
+              className="border-[#500010] text-[#500010] bg-transparent hover:bg-[#500010] hover:text-white"
+            >
+              {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+              {isPlaying ? "Pause" : "Lecture"}
+            </Button>
+            <Button
+              onClick={handlePrevStep}
+              variant="outline"
+              className="border-[#500010] text-[#500010] bg-transparent hover:bg-[#500010] hover:text-white"
+              disabled={isPlaying || currentTime <= 0}
+            >
+              <StepBack className="mr-2 h-4 w-4" />
+              Précédent (-1s)
+            </Button>
+            <Button
+              onClick={handleNextStep}
+              variant="outline"
+              className="border-[#500010] text-[#500010] bg-transparent hover:bg-[#500010] hover:text-white"
+              disabled={isPlaying || currentTime >= maxTime}
+            >
+              <StepForward className="mr-2 h-4 w-4" />
+              Suivant (+1s)
+            </Button>
+            <div className="flex items-center px-4 bg-[#500010] text-white rounded-md border border-[#500010]/60 min-w-[100px] justify-center font-mono">
+              T = {currentTime}s
+            </div>
+          </div>
           <div className="relative mt-4 overflow-x-auto">
             <div className="min-w-[600px] space-y-4">
               {/* Time grid header */}
@@ -492,6 +732,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
             </div>
           </CardContent>
         </Card>
+
       </div>
     </div>
   )

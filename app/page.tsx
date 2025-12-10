@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { FileGenerationDialog } from "@/components/file-generation-dialog"
@@ -18,9 +18,37 @@ export default function Page() {
   const [results, setResults] = useState<SchedulingResult | null>(null)
   const [isRunning, setIsRunning] = useState(false)
   const [showProcessTable, setShowProcessTable] = useState(false)
+  const [loadingDefault, setLoadingDefault] = useState(true)
+  const [currentFileName, setCurrentFileName] = useState<string>("sample_config.txt")
+
+  // Load default sample config on mount
+  useEffect(() => {
+    const loadDefaultConfig = async () => {
+      try {
+        const response = await fetch("/api/parse-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ defaultFile: "sample_config.txt" }),
+        })
+
+        if (response.ok) {
+          const processes = await response.json()
+          setProcesses(processes)
+          setCurrentFileName("sample_config.txt")
+        }
+      } catch (err) {
+        console.error("Erreur lors du chargement du fichier par défaut:", err)
+      } finally {
+        setLoadingDefault(false)
+      }
+    }
+
+    loadDefaultConfig()
+  }, [])
 
   const handleGenerateFile = (generatedProcesses: Process[]) => {
     setProcesses(generatedProcesses)
+    setCurrentFileName("Fichier généré")
     setShowFileDialog(false)
   }
 
@@ -47,6 +75,7 @@ export default function Page() {
 
           const processes = await response.json()
           setProcesses(processes)
+          setCurrentFileName(file.name)
         } catch (err) {
           alert(`Erreur : ${(err as Error).message}`)
         }
@@ -105,10 +134,16 @@ export default function Page() {
                   Gestion des Fichiers
                 </CardTitle>
                 <CardDescription className="text-gray-600">
-                  Créez un nouveau fichier ou chargez un fichier existant
+                  Fichier par défaut chargé. Vous pouvez en choisir un autre ou en générer un nouveau
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="p-4 bg-blue-100 border border-blue-300 rounded-lg">
+                  <p className="text-blue-700 font-medium text-center">
+                    ℹ️ Fichier actuel : <span className="font-bold">{currentFileName}</span>
+                  </p>
+                </div>
+
                 <Button
                   onClick={() => setShowFileDialog(true)}
                   variant="outline"
@@ -116,7 +151,7 @@ export default function Page() {
                   size="lg"
                 >
                   <FilePlus className="mr-2 h-5 w-5" />
-                  Créer un Fichier
+                  Générer un Fichier
                 </Button>
                 <Button
                   onClick={handleChooseFile}
@@ -128,7 +163,7 @@ export default function Page() {
                   Choisir un Fichier
                 </Button>
 
-        {processes.length > 0 && (
+                {!loadingDefault && processes.length > 0 && (
                   <div className="mt-4 p-4 bg-green-100 border border-green-300 rounded-lg">
                     <p className="text-green-700 font-medium text-center">✓ {processes.length} processus chargés</p>
                     <Button
@@ -189,7 +224,7 @@ export default function Page() {
               onClick={handleLaunchScheduling}
               size="lg"
               className="h-16 px-12 text-xl bg-gradient-to-r from-[#500010] to-[#800020] hover:from-[#800020] hover:to-[#a00030] text-white shadow-lg transition-all duration-300 transform hover:scale-105"
-              disabled={processes.length === 0 || isRunning}
+              disabled={isRunning}
             >
               <Play className="mr-2 h-6 w-6" />
               {isRunning ? "Calcul en cours..." : "Lancer l'Ordonnancement"}
