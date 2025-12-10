@@ -1,941 +1,586 @@
-# Ordonnanceur Linux - Application Complète
+# Ordonnanceur Linux - Documentation Complète
 
-**Simulateur d'ordonnancement multitâche en C** couplé à une **interface web Next.js** pour visualisation interactive des algorithmes de scheduling.
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+![Version](https://img.shields.io/badge/Version-1.0.0-green.svg)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)
 
----
+## 📋 Vue d'ensemble
 
-## 📋 Table des matières
+**Ordonnanceur Linux** est un simulateur complet d'algorithmes d'ordonnancement des processus avec interface web interactive. L'application combine un moteur backend en C pour les simulations d'ordonnancement et une interface web moderne construite avec Next.js/React/TypeScript.
 
-1. [Présentation générale](#présentation-générale)
-2. [Prérequis complets](#prérequis-complets)
-3. [Installation et lancement](#installation-et-lancement)
-4. [Architecture technique](#architecture-technique)
-5. [API Backend C](#api-backend-c)
-6. [API Frontend Next.js](#api-frontend-nextjs)
-7. [Algorithmes implémentés](#algorithmes-implémentés)
-8. [Structures de données](#structures-de-données)
-9. [Choix d'architecture](#choix-darchitecture)
-10. [Déroulement SCRUM](#déroulement-scrum)
-11. [Tests et validation](#tests-et-validation)
-12. [Deployment](#deployment)
+### ✨ Caractéristiques principales
 
----
+- **6 Algorithmes d'ordonnancement implémentés**:
+  - FIFO (First In First Out)
+  - Priority (Ordonnancement par Priorité avec Préemption)
+  - Round Robin (RR avec Quantum configurable)
+  - Multilevel (Multilevel Feedback Queue - Statique)
+  - Multilevel Dynamic (Multilevel avec Aging Dynamique)
+  - SRT (Shortest Remaining Time)
 
-## Présentation générale
+- **Visualisations avancées**:
+  - Diagramme de Gantt dynamique et interactif
+  - Graphique d'occupation CPU en temps réel
+  - Visualisation de la file d'attente avec animation
+  - Statistiques détaillées par processus
+  - Graphiques camembert et barres (Recharts)
 
-Ce projet simule un **ordonnanceur de processus** (scheduler) tel qu'implémenté dans les systèmes d'exploitation Linux/Unix.
-
-### Composants clés
-
-| Composant | Technologie | Rôle |
-|-----------|-------------|------|
-| **Backend** | C11 + GCC | Simulation des algorithmes, calcul des métriques |
-| **Frontend** | React 19 + TypeScript | UI interactive, visualisation |
-| **Framework web** | Next.js 16 | Liaison backend/frontend, API routes |
-| **Visualisation** | Recharts | Gantt chart, statistiques, camembert |
-| **Styles** | Tailwind CSS 4 | Design responsive |
-| **UI Components** | Radix UI | Composants accessibles (select, dialog, etc.) |
-
-### Workflow global
-
-```
-┌─────────────────────┐
-│  UI Next.js/React   │ (Sélection algo, upload config, lancement)
-└──────────┬──────────┘
-           │ POST /api/schedule
-           │ Payload: { processes, algorithm, quantum, ... }
-           ▼
-┌─────────────────────────────────────────┐
-│     API Route: app/api/schedule/route.ts│ (spawn binary C)
-├─────────────────────────────────────────┤
-│  ordonnanceur --api --config file.txt   │
-│             --algo fifo                 │
-└──────────┬──────────────────────────────┘
-           │ JSON output
-           ▼
-┌─────────────────────────────────────────┐
-│     Backend C (scheduler.c)             │ (Simulation, stats)
-│ Gantt: [start, end, process]            │
-│ Stats: [id, waitTime, priority, ...]    │
-└──────────┬──────────────────────────────┘
-           │ Response JSON
-           ▼
-┌─────────────────────┐
-│  Results Display    │ (Charts, table)
-└─────────────────────┘
-```
+- **Interface intuitive**:
+  - Chargement de fichiers de configuration personnalisés
+  - Génération automatique de processus
+  - Fichier par défaut (`sample_config.txt`) préchargé
+  - Contrôles de lecture (Play/Pause/Step Forward/Step Back)
+  - Thème sombre professionnel
 
 ---
 
-## Prérequis complets
+## 🔧 Architecture Technique
 
-### Système d'exploitation
+### Stack Technologique
 
-- **Linux** : Debian/Ubuntu, Fedora, Arch, etc.
-- **macOS** : 11+ (Monterey+)
-- **Windows** : MSYS2/MinGW64, WSL2
+#### Backend
+- **C (C11)** - Moteur de simulation (GCC)
+- **Linux/Unix** - Système d'exploitation cible
 
-### Compilateur et outils
+#### Frontend
+- **Next.js 16.0.3** - Framework React full-stack
+- **React 18+** - Bibliothèque UI
+- **TypeScript** - Typage statique
+- **Tailwind CSS** - Styling utilitaire
+- **Recharts** - Bibliothèque graphiques
+- **Radix UI** - Composants accessibles
+- **Lucide Icons** - Icônes SVG
 
-| Outil | Version min | Installation |
-|-------|-----------|--------------|
-| **GCC** ou **Clang** | 11.0 | `sudo apt install gcc` (Linux) / Xcode (macOS) / MSYS2 (Win) |
-| **make** | 4.0 | `sudo apt install make` (Linux) / inclus Xcode (macOS) |
-| **Node.js** | 20.0 | https://nodejs.org / `nvm install 20` |
-| **pnpm** | 9.0 | `npm install -g pnpm` |
+#### Outils & Infrastructure
+- **pnpm** - Gestionnaire de paquets
+- **Node.js 18+** - Runtime JavaScript
+- **Make** - Build automation (C)
+- **Git** - Contrôle de version
 
-### Installation détaillée par OS
-
-#### Linux (Debian/Ubuntu)
-
-```bash
-# Dépendances de compilation C
-sudo apt update
-sudo apt install -y build-essential gcc make
-
-# Node.js + pnpm
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-npm install -g pnpm
-
-# Vérification
-gcc --version
-make --version
-node --version
-pnpm --version
-```
-
-#### macOS
-
-```bash
-# Xcode Command Line Tools (inclut GCC, make, etc.)
-xcode-select --install
-
-# Node.js + pnpm
-brew install node pnpm
-
-# Vérification
-gcc --version
-node --version
-pnpm --version
-```
-
-#### Windows (MSYS2/MinGW64)
-
-1. Télécharger et installer MSYS2 : https://www.msys2.org/
-2. Lancer MSYS2 MinGW 64-bit terminal
-3. Installer les packages
-
-```bash
-pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-make
-
-# Node.js + pnpm
-pacman -S mingw-w64-x86_64-nodejs
-npm install -g pnpm
-
-# Vérification
-gcc --version
-make --version
-node --version
-```
-
-### Vérification globale
-
-```bash
-gcc --version        # >= 11.0
-make --version       # >= 4.0
-node --version       # >= 20.0
-pnpm --version       # >= 9.0
-```
-
-Si l'une des commandes échoue, revérifier l'installation correspondante.
-
----
-
-## Installation et lancement
-
-### 1. Cloner/télécharger le projet
-
-```bash
-cd /chemin/vers/projet
-# ou
-git clone <url-repo>
-cd Projet-Ordonnancement-Linux-arij-dev
-```
-
-### 2. Compiler le backend C
-
-```bash
-make clean          # Nettoie les anciens fichiers compilés
-make                # Compile tout (ou 'make CC=gcc' sous MSYS2)
-```
-
-**Résultat** : Un exécutable `ordonnanceur` à la racine (vérifier avec `ls ordonnanceur` ou `dir ordonnanceur.exe` sur Windows).
-
-### 3. Installer les dépendances frontend
-
-```bash
-pnpm install        # Installe Node modules
-```
-
-### 4. Lancer le serveur de développement
-
-```bash
-pnpm dev
-```
-
-**Output** :
+### Structure du Projet
 
 ```
-> next dev
-
-  ▲ Next.js 16.0.3
-  - Local:        http://localhost:3000
-  ...
-```
-
-### 5. Accéder l'interface
-
-Ouvrir dans un navigateur : **http://localhost:3000**
-
-### Pour arrêter
-
-- Terminal : `Ctrl+C`
-- Compilé : `make clean` (optionnel)
-
----
-
-## Architecture technique
-
-### Répertoire racine
-
-```
-Projet-Ordonnancement-Linux-arij-dev/
-├── src/                           # Backend C source
-│   ├── main.c                     # CLI, point d'entrée
-│   ├── parser.c                   # Lecture fichiers config
-│   ├── scheduler.c                # Moteur simulation + JSON API
-│   ├── generate_config.c          # Générateur processus
-│   └── utils.c                    # Utilitaires affichage
-│
-├── include/                       # Headers C publics
-│   ├── process.h                  # Struct process
-│   ├── scheduler.h                # Prototypes scheduler
-│   ├── parser.h                   # Prototypes parser
-│   └── ...
-│
-├── policies/                      # Implémentation des algos
-│   ├── fifo.c                     # FIFO non-préemptif
-│   ├── priority_preemptive.c      # Priority avec préemption
-│   ├── roundrobin.c               # Round Robin
-│   ├── srt.c                      # SRT
-│   ├── multilevel.c               # Multilevel statique
-│   └── multilevel_dynamic.c       # Multilevel + aging
-│
-├── app/                           # Next.js (React frontend)
-│   ├── page.tsx                   # Page principale
-│   ├── layout.tsx                 # Layout global
-│   └── api/
-│       ├── schedule/route.ts      # Route: POST /api/schedule
-│       └── parse-config/route.ts  # Route: POST /api/parse-config
-│
-├── components/                    # React components
-│   ├── results-display.tsx        # Affichage résultats (Gantt, charts)
-│   ├── algorithm-selector.tsx     # Sélecteur algo/params
-│   ├── file-generation-dialog.tsx # Dialogue génération fichier
-│   └── ui/                        # Composants Radix UI
-│
-├── lib/                           # Utilitaires TypeScript
-│   ├── types.ts                   # Interfaces (Process, Result, etc.)
-│   └── utils.ts                   # Helpers
-│
-├── tests/                         # Tests C unitaires
+ordonnanceur-linux/
+├── src/                      # Code source C
+│   ├── main.c               # Point d'entrée CLI
+│   ├── parser.c             # Parser fichiers config
+│   ├── scheduler.c          # Orchestrateur simulations
+│   └── utils.c              # Utilitaires C
+├── policies/                # Algorithmes d'ordonnancement
+│   ├── fifo.c
+│   ├── priority_preemptive.c
+│   ├── roundrobin.c
+│   ├── srt.c
+│   ├── multilevel.c
+│   └── multilevel_dynamic.c
+├── include/                 # Headers C
+│   ├── process.h           # Structure processus
+│   ├── parser.h
+│   ├── scheduler.h
+│   └── utils.h
+├── tests/                   # Tests unitaires C
 │   ├── test_fifo.c
+│   ├── test_roundrobin.c
 │   ├── test_priority.c
-│   └── ...
-│
-├── config/                        # Fichiers config exemple
-│   ├── sample_config.txt          # Processus de test
-│   └── config_*.txt               # Configs générées dynamiquement
-│
-├── Makefile                       # Compilation automatisée
-├── package.json                   # Dépendances Node.js
-├── tsconfig.json                  # Configuration TypeScript
-├── tailwind.config.js             # Styles Tailwind
-├── next.config.mjs                # Config Next.js
-└── README.md                      # Ce fichier
+│   ├── test_multilevel.c
+│   ├── test_multilevel_dynamic.c
+│   └── test_parser.c
+├── app/                     # Application Next.js
+│   ├── page.tsx            # Page principale
+│   ├── layout.tsx          # Layout global
+│   ├── globals.css         # Styles globaux
+│   └── api/
+│       ├── parse-config/   # Endpoint parsing
+│       └── schedule/       # Endpoint ordonnancement
+├── components/              # Composants React
+│   ├── results-display.tsx  # Affichage résultats (Gantt, stats)
+│   ├── algorithm-selector.tsx
+│   ├── file-generation-dialog.tsx
+│   ├── theme-provider.tsx
+│   └── ui/                 # Composants Radix UI customisés
+├── lib/                     # Utilitaires TypeScript
+│   ├── types.ts            # Types partagés
+│   └── utils.ts
+├── config/                  # Fichiers de configuration
+│   └── sample_config.txt    # Configuration par défaut
+├── public/                  # Assets statiques
+├── Makefile                 # Build C
+├── package.json             # Dependencies Node.js
+├── tsconfig.json            # Configuration TypeScript
+├── next.config.mjs          # Configuration Next.js
+└── README_COMPLET.md        # Cette documentation
 ```
-
-### Backend C (architecture interne)
-
-#### Struct `process` (process.h)
-
-```c
-struct process {
-    char name[64];        // Identifiant unique (P1, P2, ...)
-    int arrival_time;     // Temps d'arrivée (unités)
-    int exec_time;        // Durée d'exécution (immuable)
-    int priority;         // Priorité initiale
-    int remaining_time;   // Temps restant à exécuter
-    int waiting_time;     // Temps en attente
-    int status;           // READY(0), RUNNING(1), ZOMBIE(3)
-    int end_time;         // Temps de fin
-    int wait_time;        // Pour aging dynamique
-};
-```
-
-      "end": 80,
-
-```c
-struct process_stat {
-    char id[64];
-    int arrival_time;
-    int exec_time;
-    int wait_time;
-    int finish_time;
-    int priority;        // Priorité initiale
-    int final_priority;  // Priorité finale (multilevel_dynamic)
-};
-```
-
-#### Flow d'exécution du backend
-
-1. **main.c** : Parse CLI (`--api`, `--config`, `--algo`, etc.)
-2. **parser.c** : Lit le fichier config → tableau de `struct process`
-3. **scheduler.c** : Appelle la fonction d'algo (fifo, priority, etc.)
-4. **policies/*.c** : Implémente chaque algorithme spécifique
-5. **scheduler.c** : Génère JSON → stdout
-6. **API Next.js** : Capture stdout → répond en JSON au client
-
-### Frontend (React + Next.js)
-
-#### Flux React
-
-```
-Page (app/page.tsx)
-├── State: processes[], algorithmConfig, results
-├── Actions:
-│   ├── handleGenerateFile() → génère processus
-│   ├── handleChooseFile() → POST /api/parse-config
-│   ├── handleLaunchScheduling() → POST /api/schedule
-│   └── handleReset()
-├── Renders:
-│   ├── FileGenerationDialog
-│   ├── AlgorithmSelector
-│   ├── ProcessTable (preview)
-│   ├── Button "Lancer la simulation"
-│   └── ResultsDisplay (si results != null)
-└── ResultsDisplay
-    ├── Gantt Chart (interactif, timeline)
-    ├── Pie Chart (répartition temps total)
-    ├── Bar Chart (attente/total par processus)
-    └── Table détaillée (id, arrivée, exec, priorité initiale/finale, attente)
-```
-
-#### Palette de couleurs déterministe
-
-- Chaque processus reçoit une couleur unique basée sur son ID
-- Palette de 20 couleurs + fallback HSL pour garantir l'unicité
-- Couleur utilisée partout : Gantt, pie chart, table
 
 ---
 
-## API Backend C
+## 📦 Prérequis
 
-### Mode API (JSON)
+### Windows 10/11
+- **WSL2** (Windows Subsystem for Linux) avec Ubuntu 20.04 LTS ou plus récent
+- **Git Bash** ou **PowerShell avec WSL intégré**
+- **Node.js 18.0.0+** (64-bit)
+- **pnpm 8.0.0+**
+- **GCC 9.0+** (via apt dans WSL)
+- **Make** (via apt dans WSL)
 
-Le binaire `ordonnanceur` supporte un mode JSON pour intégration système :
+### Linux (Ubuntu/Debian)
+- **Node.js 18.0.0+**
+- **pnpm 8.0.0+**
+- **GCC 9.0+**
+- **Make**
+- **Build-essential** (compilation outils)
+
+### macOS
+- **Xcode Command Line Tools**
+- **Node.js 18.0.0+** (via Homebrew)
+- **pnpm 8.0.0+**
+- **GCC** (via Homebrew: `brew install gcc`)
+- **Make** (inclus avec Xcode CLT)
+
+---
+
+## 🚀 Installation & Configuration
+
+### Étape 1: Cloner le repository
 
 ```bash
-./ordonnanceur --api \
-  --config config/sample_config.txt \
-  --algo fifo \
-  --quantum 2 \
-  --prio-order desc
+git clone https://github.com/arijsebai/Projet-Ordonnancement-Linux.git
+cd Projet-Ordonnancement-Linux
 ```
 
-### Arguments CLI
-
-| Flag | Valeur | Défaut | Description |
-|------|--------|--------|-------------|
-| `--api` | (booléen) | - | Active le mode JSON (vs interactif) |
-| `--config` | `<fichier>` | - | Chemin fichier config |
-| `--algo` | fifo/priority/roundrobin/srt/multilevel/multilevel_dynamic | fifo | Algorithme |
-| `--quantum` | `<entier>` | 2 | Quantum pour RR/multilevel |
-| `--prio-order` | asc/desc | desc | Ordre priorité (pour priority) |
-| `--parse-config` | `<fichier>` | - | Parse et renvoie JSON (au lieu de scheduler) |
-
-### Sortie JSON (mode `--api`)
-
-```json
-{
-  "algorithm": "fifo",
-  "ganttData": [
-    {
-      "process": "P1",
-      "start": 0,
-      "end": 5,
-      "duration": 5
-    },
-    {
-      "process": "P2",
-      "start": 5,
-      "end": 80,
-      "duration": 3
-    }
-  ],
-  "processStats": [
-    {
-      "id": "P1",
-      "waitTime": 0,
-      "totalTime": 5,
-      "arrivalTime": 0,
-      "executionTime": 5,
-      "finishTime": 80,
-      "priority": 2
-    },
-    {
-      "id": "P2",
-      "waitTime": 3,
-      "totalTime": 6,
-      "arrivalTime": 2,
-      "executionTime": 3,
-      "finishTime": 80,
-      "priority": 1
-    }
-  ],
-  "averageWait": 1.5,
-  "makespan": 80
-}
-```
-
-### Sortie JSON (mode `--parse-config`)
-
-```json
-[
-  {
-    "id": "P1",
-    "arrivalTime": 0,
-    "executionTime": 5,
-    "priority": 2
-  },
-  {
-    "id": "P2",
-    "arrivalTime": 2,
-    "executionTime": 3,
-    "priority": 1
-  }
-]
-```
-
----
-
-## API Frontend Next.js
-
-### Route 1: POST /api/parse-config
-
-**Objectif** : Charger un fichier config texte via le backend C.
-
-**Request**
+### Étape 2: Installer les dépendances Node.js
 
 ```bash
-curl -X POST http://localhost:3000/api/parse-config \
-  -F "file=@config/sample_config.txt"
+# Avec pnpm (recommandé)
+pnpm install
+
+# Ou avec npm
+npm install
 ```
 
-**Response**
-
-```json
-[
-  {
-    "id": "P1",
-    "arrivalTime": 0,
-    "executionTime": 5,
-    "priority": 2
-  }
-]
-```
-
-**Code** (app/api/parse-config/route.ts)
-
-```typescript
-export async function POST(request: Request) {
-  const formData = await request.formData()
-  const file = formData.get("file") as File
-  
-  // Crée un fichier temp
-  // Appelle: spawn(ordonnanceur, ['--parse-config', tmpPath])
-  // Renvoie le JSON parsé
-}
-```
-
-### Route 2: POST /api/schedule
-
-**Objectif** : Lancer une simulation avec les paramètres donnés.
-
-**Request**
+### Étape 3: Compiler le backend C
 
 ```bash
-curl -X POST http://localhost:3000/api/schedule \
-  -H "Content-Type: application/json" \
-  -d '{
-    "processes": [
-      { "id": "P1", "arrivalTime": 0, "executionTime": 5, "priority": 2 },
-      { "id": "P2", "arrivalTime": 2, "executionTime": 3, "priority": 1 }
-    ],
-    "algorithm": "fifo",
-    "quantum": 2,
-    "priorityOrder": "desc"
-  }'
+# Linux/macOS/Windows (WSL)
+make clean
+make all
+
+# Vérifier la compilation
+ls -la ordonnanceur
 ```
 
-**Response**
-
-```json
-{
-  "algorithm": "fifo",
-  "ganttData": [...],
-  "processStats": [...],
-  "averageWait": 1.5,
-  "makespan": 80
-}
-```
-
-**Code** (app/api/schedule/route.ts)
-
-```typescript
-export async function POST(request: Request) {
-  const { processes, algorithm, quantum, priorityOrder } = await request.json()
-  
-  // Crée un fichier temp avec les processus
-  // Appelle: spawn(ordonnanceur, ['--api', '--config', tmpPath, '--algo', ...])
-  // Parse stdout en JSON
-  // Retourne le résultat au client
-}
-```
-
----
-
-## Algorithmes implémentés
-
-### 1. FIFO (First-In First-Out)
-
-- **Préemptif** : Non
-- **Équité** : Basse (processus long bloque le système)
-- **Cas d'usage** : Batch jobs
-- **Implémentation** : `policies/fifo.c`
-
-```c
-int fifo_scheduler(struct process *procs, int n, int time, int current, int unused) {
-    int best = -1;
-    int earliest = INT_MAX;
-    for (int i = 0; i < n; i++) {
-        if (procs[i].arrival_time <= time && 
-            procs[i].remaining_time > 0 &&
-            procs[i].arrival_time < earliest) {
-            earliest = procs[i].arrival_time;
-            best = i;
-        }
-    }
-    return best;
-}
-```
-
-### 2. Priority Preemptive
-
-- **Préemptif** : Oui
-- **Modes** : asc (petite valeur = haute prio) / desc (grande valeur = haute prio)
-- **Équité** : Basse (processus faible priorité peuvent starver)
-- **Implémentation** : `policies/priority_preemptive.c`
-
-```c
-int priority_preemptive(struct process *procs, int n, int time, int current, int mode) {
-    int best = -1;
-    int best_prio = (mode == 0) ? INT_MAX : INT_MIN;
-    
-    for (int i = 0; i < n; i++) {
-        if (procs[i].arrival_time <= time && procs[i].remaining_time > 0) {
-            if ((mode == 0 && procs[i].priority < best_prio) ||
-                (mode == 1 && procs[i].priority > best_prio)) {
-                best_prio = procs[i].priority;
-                best = i;
-            }
-        }
-    }
-    return best;
-}
-```
-
-### 3. Round Robin
-
-- **Préemptif** : Oui (à chaque quantum)
-- **Équité** : Haute
-- **Quantum** : Configurable
-- **Implémentation** : `policies/roundrobin.c`
-
-File circulaire + quantum d'exécution fixe.
-
-### 4. SRT (Shortest Remaining Time)
-
-- **Préemptif** : Oui
-- **Temps d'attente** : Théoriquement optimal
-- **Complexité** : Haute (calcul du minimum à chaque étape)
-- **Implémentation** : `policies/srt.c`
-
-Exécute toujours le processus avec le temps restant le plus court.
-
-### 5. Multilevel Queue (Statique)
-
-- **Préemptif** : Oui
-- **Files** : Multiples (par priorité)
-- **Équité** : Moyenne
-- **Famine** : Oui (basse priorité peut starver)
-- **Implémentation** : `policies/multilevel.c`
-
-### 6. Multilevel Feedback Queue (Dynamique) ⭐
-
-- **Préemptif** : Oui
-- **Aging** : Priorité augmente au fil du temps en attente
-- **Anti-famine** : Oui (vieillissement garantit exécution)
-- **Moderne** : Inspiré du CFS Linux réel
-- **Implémentation** : `policies/multilevel_dynamic.c` + `scheduler.c` (aging)
-
-**Traçage priorités** :
-
-- `priority` = priorité initiale
-- `final_priority` = priorité après vieillissement
-
----
-
-## Structures de données
-
-### Choix clés
-
-#### 1. Représentation des processus
-
-**Choix** : Tableau statique `struct process[]` alloué dynamiquement
-
-**Avantages** :
-- Accès O(1) par indice
-- Pas de fragmentation mémoire
-- Simplicité implémentation
-
-**Inconvénients** :
-- Taille max : 256 processus
-
-```c
-struct process *procs = malloc(n * sizeof(struct process));
-```
-
-#### 2. Ready Queue
-
-**Choix** : Représentation implicite (parcours du tableau)
-
-```c
-for (int i = 0; i < n; i++) {
-    if (procs[i].arrival_time <= time && 
-        procs[i].remaining_time > 0) {
-        // processus prêt
-    }
-}
-```
-
-**Avantages** : Pas de structure auxiliaire → code simple, flexible
-**Inconvénients** : O(n) par recherche
-
-#### 3. Gantt Segments
-
-**Structure** :
-
-```c
-struct gantt_segment {
-    char process[64];
-    int start;
-    int end;
-};
-```
-
-Tableau de ~2048 segments max (pour traces détaillées).
-
-#### 4. Process Stats (export JSON)
-
-**Structure** :
-
-```c
-struct process_stat {
-    char id[64];
-    int arrival_time;
-    int exec_time;
-    int wait_time;
-    int finish_time;
-    int priority;        // Initiale
-    int final_priority;  // Finale (multilevel_dynamic)
-};
-```
-
-Simplifie conversion → JSON.
-
----
-
-## Choix d'architecture
-
-### 1. Séparation Backend/Frontend
-
-**Décision** : C (backend) + Next.js (frontend) via API JSON
-
-**Justification** :
-- C : performance, bas niveau, requis par projet
-- React : UI riche, réactivité, visualisation
-- JSON : sérialisation simple, multiplateforme
-
-**Alternative rejetée** : WebAssembly (trop complexe pour un projet étudiant)
-
-### 2. Mode API du binaire C
-
-**Décision** : `--api` flag qui renvoie JSON au lieu d'affichage console
-
-```c
-if (api_mode) {
-    // Exécute scheduler
-    // Appelle print_json_result()
-    // stdout = JSON
-} else {
-    // Mode interactif traditionnel
-}
-```
-
-**Justification** :
-- Une seule compilation du binaire
-- Réutilisable en CLI ou via API
-- Testable indépendamment
-
-### 3. Fichier temporaire pour config
-
-**Decision** : Node.js crée un fichier temp, appelle `ordonnanceur`, récupère stdout
-
-```typescript
-// route.ts
-const tmpPath = `/tmp/config_${Date.now()}.txt`;
-fs.writeFileSync(tmpPath, configContent);
-const result = spawn('ordonnanceur', ['--api', '--config', tmpPath]);
-// ... capture stdout ...
-fs.unlinkSync(tmpPath); // cleanup
-```
-
-**Justification** :
-- Format éprouvé (texte)
-- Pas de pipe complexe
-- Compatible Windows/Linux/macOS
-
-### 4. Couleurs déterministes
-
-**Décision** : Chaque processus (par ID) → couleur fixe via Map
-
-```typescript
-const colorMap = new Map<string, string>();
-uniqueProcesses.forEach((pid, idx) => {
-    const base = PALETTE[idx % 20] || `hsl(${(idx * 137) % 360}deg 70% 45%)`;
-    colorMap.set(pid, base);
-});
-```
-
-**Justification** :
-- Palette de 20 couleurs distinctes
-- Fallback HSL pour >20 processus (golden angle = 137°)
-- Couleur cohérente partout (Gantt, pie, table)
-
----
-
-## Déroulement SCRUM
-
-### Organisation équipe
-
-- **5 développeurs** : Arij, Aya, Balkis, Hadil, Wiem
-- **Durée** : Octobre → Décembre 2025 (10 semaines)
-- **Sprints** : 2 semaines chacun (5 sprints)
-
-### Artefacts
-
-#### Product Backlog (initial)
-
-1. Backend C : 6 algorithmes → JSON API
-2. Frontend React : UI sélection algo + résultats
-3. Intégration C ↔ React
-4. Visualisation Gantt
-5. Tests unitaires
-6. Documentation
-
-#### Sprint Backlog (exemple Sprint 1)
-
-| User Story | Points | Dev | Status |
-|-----------|--------|-----|--------|
-| Backend C FIFO + Priority | 5 | Arij | Done |
-| Frontend: File upload | 3 | Aya | Done |
-| Gantt chart (statique) | 5 | Balkis | In Progress |
-| API routes setup | 3 | Hadil | Done |
-
-### Réunions
-
-- **Sprint Planning** : Lundi (2h) → définition sprint
-- **Daily** : 15 min (Slack/Teams)
-- **Review** : Vendredi (1h) → démo résultats
-- **Retrospective** : Vendredi (30 min) → améliorations
-
-### Métriques SCRUM
-
-- **Vélocité** : ~15 points/sprint (moyens)
-- **Burndown** : Réduction linéaire du backlog
-- **Blockers** : Intégration C/JS initiale, puis résolu semaine 2
-
----
-
-## Tests et validation
-
-### Tests Backend C
-
-Fichiers : `tests/test_*.c`
+### Étape 4: Vérifier la structure du projet
 
 ```bash
-# Compiler tests
-make test
-
-# Exécuter
-./build/test_fifo
-./build/test_priority
-./build/test_multilevel_dynamic
-# ...
+# Linux/macOS/Windows (WSL)
+ls -la config/sample_config.txt
+cat config/sample_config.txt
 ```
-
-### Tests Frontend
-
-```bash
-# ESLint
-pnpm lint
-
-# Build
-pnpm build
-```
-
-### Tests d'intégration
-
-1. Générer config de test
-2. Upload via UI
-3. Lancer chaque algo
-4. Vérifier Gantt + stats
 
 ---
 
-## Deployment
+## 💻 Utilisation
 
-### Développement
+### Mode 1: Interface Web (Recommandé)
+
+#### Démarrer l'application web
 
 ```bash
-pnpm dev                # Next.js dev server (http://localhost:3000)
-./ordonnanceur --api    # Test backend directement
+# Développement (rechargement automatique)
+pnpm dev
+
+# L'app sera disponible à : http://localhost:3000
 ```
 
-### Production
+#### Interface utilisateur
+
+1. **Page d'accueil** :
+   - ✅ Fichier par défaut (`sample_config.txt`) préchargé automatiquement
+   - Affichage du nombre de processus chargés
+   - Boutons pour "Générer un Fichier" ou "Choisir un Fichier"
+
+2. **Gestion des fichiers** :
+   - Générer : Crée 5-10 processus aléatoires
+   - Choisir : Uploader un fichier `.txt` personnalisé
+   - Format attendu: `name arrival execution priority` (un par ligne)
+
+3. **Sélection de l'algorithme** :
+   - Choisir parmi FIFO, Priority, RR, Multilevel, Multilevel Dynamic, SRT
+   - Paramètres dynamiques (ex: Quantum pour Round Robin)
+
+4. **Lancer la simulation** :
+   - Bouton "Lancer l'Ordonnancement"
+   - Visualisation en temps réel du Gantt
+
+5. **Résultats** :
+   - Diagramme de Gantt avec timeline dynamique
+   - Graphique CPU + File d'attente
+   - Tableau détaillé des statistiques
+   - Graphiques d'analyse (barres, camembert)
+
+#### Exemple de fichier de configuration
+
+```txt
+# Format: name arrival_time execution_time priority
+P1 0 5 1
+P2 2 3 2
+P3 4 2 1
+P4 6 4 2
+P5 8 2 1
+```
+
+---
+
+### Mode 2: Ligne de commande (CLI - Backend pur)
+
+#### Exécutable C
 
 ```bash
-# Build
-make
+# Format
+./ordonnanceur <fichier_config.txt>
+
+# Exemple
+./ordonnanceur config/sample_config.txt
+```
+
+#### Flux d'exécution CLI
+
+1. Charger le fichier de configuration
+2. Menu interactif pour choisir l'algorithme :
+   ```
+   Choisir un algorithme:
+   1. FIFO
+   2. Priorité (Préemption)
+   3. Round Robin
+   4. Multilevel
+   5. Multilevel Dynamic
+   6. SRT
+   ```
+3. Entrer les paramètres si nécessaire (ex: Quantum)
+4. Simulation et affichage des résultats en console
+
+#### Exemple de sortie console
+
+```
+═══════════════════════════════════════════════════════════════
+                   DONNÉES DE TEST FIFO
+═══════════════════════════════════════════════════════════════
+  Name     Arrival   Exec
+  ─────    ───────   ────
+  P1           0      5
+  P2           2      3
+  P3           4      2
+
+╔═════════════════════════════════════════════════════════════╗
+║            SIMULATION (TABLEAU GANTT)                       ║
+╚═════════════════════════════════════════════════════════════╝
+ Time  Executing  Ready Queue
+ ──────────────────────────────
+    0      P1        []
+    1      P1        []
+    2      P1        [P2]
+    3      P1        [P2]
+    4      P1        [P2, P3]
+    5      P2        [P3]
+    6      P2        []
+    7      P2        []
+    8      P3        []
+    9      P3        []
+
+FINAL STATISTICS
+Name  Arrival  Exec  Finish  Wait
+────────────────────────────────
+P1        0     5       5      0
+P2        2     3       8      3
+P3        4     2      10      4
+
+Average Wait Time: 2.33
+Makespan: 10
+```
+
+---
+
+## 🧪 Tests
+
+### Tests unitaires C
+
+```bash
+# Tester le parser
+make clean && make all
+./ordonnanceur config/sample_config.txt
+
+# Tester individuellement chaque algorithme
+./tests/test_fifo
+./tests/test_roundrobin
+./tests/test_priority
+./tests/test_multilevel
+./tests/test_multilevel_dynamic
+```
+
+### Tests Web
+
+```bash
+# Build de production
 pnpm build
 
-# Lancer
+# Run en mode production
 pnpm start
 
-# Ou containeriser
-docker build -t ordonnanceur .
-docker run -p 3000:3000 ordonnanceur
+# Lint & vérifications
+pnpm lint
 ```
 
 ---
 
-## Format fichier config
+## 📊 Format de Configuration
 
-Texte, une ligne par processus :
-
-```
-NomProcessus TempsArrivée DuréeExécution Priorité
-```
-
-Exemple :
+### Structure du fichier
 
 ```
-P1 0 5 2
-P2 2 3 1
-P3 4 6 3
+# Commentaire (optionnel)
+# Format: NAME ARRIVAL EXECUTION PRIORITY
+
+P1 0 5 1
+P2 2 3 2
+P3 4 2 1
 ```
 
-### Validation
+### Champs obligatoires
 
-- Champ obligatoires : 4 (nom, arrivée, durée, priorité)
-- Valeurs numériques : entiers > 0
-- Nom : alphanumériques + underscore
+| Champ | Type | Description | Exemple |
+|-------|------|-------------|---------|
+| NAME | String | Identifiant du processus | P1, P2, Task_A |
+| ARRIVAL | Entier | Temps d'arrivée (≥0) | 0, 5, 10 |
+| EXECUTION | Entier | Temps d'exécution (>0) | 5, 10, 3 |
+| PRIORITY | Entier | Priorité statique (≥0) | 0 (haute) à 5 (basse) |
 
----
+### Règles de parsing
 
-## Troubleshooting
-
-### `ordonnanceur: command not found`
-
-→ `make` n'a pas compilé. Relancer `make` et vérifier les erreurs.
-
-### Port 3000 déjà utilisé
-
-→ `pnpm dev --port 3001`
-
-### Erreur lors du parse config
-
-→ Vérifier le format du fichier (4 colonnes, séparées par espace).
-
-### API /api/schedule lente
-
-→ Le binaire C peut être lent sur configs massives. Limiter à <100 processus.
+- Les lignes vides sont ignorées
+- Les commentaires `#` sont ignorés
+- Les commentaires en fin de ligne sont acceptés
+- Minimum 4 tokens par ligne
+- Les priorités peuvent être inversées selon l'algorithme
 
 ---
 
-## Licences et attributions
+## 🎯 Algorithmes d'ordonnancement
 
-- Code généré partiellement via assistance IA (ChatGPT, Grok) — voir `ANALYSE_LICENCES.md`
-- Radix UI, Recharts, Next.js : licences opensource (MIT, Apache 2.0)
+### 1. FIFO (First In First Out)
+- **Description**: Plus simple, non-préemptif
+- **Cas d'usage**: Système batch, démonstration pédagogique
+- **Avantages**: Simple, déterministe
+- **Inconvénients**: Peut avoir long temps d'attente (convoy effect)
+
+### 2. Priority (Ordonnancement par Priorité)
+- **Description**: Préemptif basé sur la priorité
+- **Cas d'usage**: Systèmes temps réel, multi-tâche
+- **Paramètres**: Priorité initiale
+- **Avantages**: Processus critique d'abord
+- **Inconvénients**: Risque de famine (starvation)
+
+### 3. Round Robin
+- **Description**: Partage équitable du CPU (quantum)
+- **Cas d'usage**: Systèmes interactifs, multi-utilisateurs
+- **Paramètres**: Quantum (ex: 2-4 unités temps)
+- **Avantages**: Équitable, réactivité
+- **Inconvénients**: Context switch overhead
+
+### 4. Multilevel (Feedback Queue Statique)
+- **Description**: Files d'attente par priorité avec Round Robin
+- **Cas d'usage**: Systèmes batch + interactif
+- **Paramètres**: Quantum
+- **Avantages**: Flexibilité, équité
+- **Inconvénients**: Configuration complexe
+
+### 5. Multilevel Dynamic (avec Aging)
+- **Description**: Multilevel avec ajustement dynamique de priorité
+- **Cas d'usage**: Prévention de famine, équité améliorée
+- **Paramètres**: Quantum, taux aging
+- **Avantages**: Évite la famine, équitable
+- **Inconvénients**: Overhead computationnel
+
+### 6. SRT (Shortest Remaining Time)
+- **Description**: Préemptif, privilégie les jobs courts
+- **Cas d'usage**: Minimiser temps moyen attente
+- **Avantages**: Bon temps d'attente moyen
+- **Inconvénients**: Starvation des longs jobs
 
 ---
 
-## Auteurs
+## 📈 Métriques et Statistiques
 
-**Équipe ISI 1ING3** (Décembre 2025)
+L'application calcule et affiche:
 
-Arij Sebai, Aya Sakroufi, Balkis Hanafi, Hadil Hasni, Wiem Ayari
-
-Institut Supérieur d'Informatique à Ariana, Tunisie
-
----
-
-## Ressources
-
-- **Documentation C** : https://en.cppreference.com/w/c/
-- **Next.js** : https://nextjs.org/docs
-- **React** : https://react.dev
-- **Recharts** : https://recharts.org
+- **Temps d'arrivée** : Quand le processus arrive
+- **Temps d'exécution** : Durée totale requise
+- **Temps de fin** : Moment de completion
+- **Temps d'attente** : Temps passé en file (finish - arrival - execution)
+- **Temps de rotation** : Temps total du processus (finish - arrival)
+- **Makespan** : Temps total de la simulation
+- **Temps d'attente moyen** : Moyenne pour tous les processus
 
 ---
 
-## Export en PDF
+## 🐛 Troubleshooting
 
-Ce README (~20-25 pages) peut être exporté en PDF via :
+### Problème: "Binaire backend introuvable"
+```bash
+# Solution
+make clean
+make all
+# Vérifier que ordonnanceur existe
+ls -la ordonnanceur
+```
 
-1. **Browser** : Ouvrir ce fichier dans VS Code Preview (Markdown Preview ou GitHub)
-   - Imprimer avec `Ctrl+P` → "Enregistrer en PDF"
-   - Recommandations : Format A4, Marges min, Pas d'arrière-plan
+### Problème: "Erreur lors du parsing du fichier"
+```bash
+# Vérifier le format du fichier
+cat config/sample_config.txt
 
-2. **Ligne de commande** (si pandoc installé) :
-   ```bash
-   pandoc README.md -o README.pdf --pdf-engine=xelatex
-   ```
+# Valider chaque ligne
+# Format: NAME ARRIVAL EXECUTION PRIORITY
+P1 0 5 1
+P2 2 3 2
+```
 
-3. **En ligne** : Copier le contenu dans un convertisseur Markdown→PDF
+### Problème: "Port 3000 déjà utilisé"
+```bash
+# Spécifier un autre port
+pnpm dev -- -p 3001
+
+# Ou tuer le processus existant
+lsof -i :3000
+kill -9 <PID>
+```
+
+### Problème: "pnpm: commande introuvable" (Windows WSL)
+```bash
+# Installer pnpm globalement
+npm install -g pnpm
+
+# Ou utiliser npm directement
+npm install
+npm run dev
+```
 
 ---
 
-**Dernière mise à jour** : 8 Décembre 2025
+## 🔐 Sécurité & Performance
+
+### Limitations connues
+- Simulation limitée à ~100 processus
+- Quantum minimum recommandé: 1
+- Nom processus: max 64 caractères
+- Temps exécution: max 10000 unités
+
+### Optimisations
+- Parsing streaming pour gros fichiers
+- Memoization des calculs UI
+- Virtual scrolling pour longs tableaux
+- Debouncing des contrôles timeline
+
+---
+
+## 📝 Fichiers de Configuration Fournis
+
+### `config/sample_config.txt`
+Fichier par défaut avec 7 processus de test
+
+### `config/sample_config_<timestamp>.txt`
+Fichiers générés lors de chaque simulation web
+
+---
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues! 
+
+1. Fork le repo
+2. Créer une branche (`git checkout -b feature/AmazingFeature`)
+3. Commit vos changements (`git commit -m 'Add AmazingFeature'`)
+4. Push vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrir une Pull Request
+
+---
+
+## 📄 Licence
+
+Ce projet est licencié sous la Licence MIT - voir le fichier [LICENSE](LICENSE) pour les détails.
+
+```
+MIT License
+
+Copyright (c) 2025 arijsebai
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software...
+```
+
+---
+
+## 👨‍💻 Auteur
+
+**Arij Sebai**
+- GitHub: [@arijsebai](https://github.com/arijsebai)
+- Email: contact@arijsebai.dev
+- Projet: [Projet-Ordonnancement-Linux](https://github.com/arijsebai/Projet-Ordonnancement-Linux)
+
+---
+
+## 📞 Support
+
+### Documentation
+- Voir `Documentation.md` pour détails techniques
+- Voir `INDEX.md` pour index des fichiers
+- Voir `COMPLETION_SUMMARY.md` pour historique
+
+### Issues
+Signaler des bugs via GitHub Issues avec:
+- Description claire du problème
+- Étapes de reproduction
+- Environnement (OS, versions)
+- Logs pertinents
+
+### Contact
+Pour questions ou suggestions, créer une issue sur le repository.
+
+---
+
+## 🎓 Cas d'usage pédagogiques
+
+Cette application est idéale pour:
+- Cours sur les systèmes d'exploitation
+- Visualisation d'algorithmes d'ordonnancement
+- Démonstrations en temps réel
+- Projets étudiants
+- Présentations techniques
+
+---
+
+## ⚡ Roadmap Futures
+
+- [ ] Support NUMA/NUMA-aware scheduling
+- [ ] Profiling CPU/Mémoire
+- [ ] Export résultats (PDF, CSV)
+- [ ] Benchmarking comparatif
+- [ ] Plugin système pour scheduling réel
+- [ ] Mobile responsive improvements
+- [ ] Dark/Light theme toggle
+
+---
+
+## 🙏 Remerciements
+
+- Radix UI pour composants accessibles
+- Recharts pour visualisations
+- Vercel pour Next.js
+- Communauté Linux et système d'exploitation
+
+---
+
+**Dernière mise à jour**: Décembre 2025  
+**Version**: 1.0.0 - Production Ready

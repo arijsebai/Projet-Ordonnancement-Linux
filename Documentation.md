@@ -38,6 +38,30 @@
 
 <div style="page-break-after: always;"></div>
 
+## ⚠️ CONVENTION IMPORTANTE : Priorités
+
+**La convention de priorité utilisée dans ce projet est la convention UNIX** :
+
+$$\text{Petite Valeur} > \text{Grande Valeur}$$
+
+Exemples :
+- Priority 0 > Priority 1 > Priority 5 > Priority 10
+- Un processus avec `priority = 0` a PLUS de priorité qu'un avec `priority = 5`
+
+**Mode Ascending** (défaut) : Applique cette convention Unix
+- Utilisé automatiquement pour tous les algorithmes de priorité
+- Peut être explicité via `--prio-order asc` en mode API
+
+**Mode Descending** (optionnel) : Inverse la convention
+- Grande valeur = haute priorité (moins intuitif pour Unix)
+- Activable via `--prio-order desc` en mode API
+
+⚠️ **Ne pas confondre** avec le mode "aging" ou "dynamique" :
+- **Ascending/Descending** = convention de comparaison des valeurs
+- **Statique/Dynamique** = changement de priorité avec le temps
+
+<div style="page-break-after: always;"></div>
+
 <div align="center">
 
 ## Table des Matières
@@ -63,10 +87,11 @@
 
 ### **4. Technologies et Architecture** ........................... [Page 17](#4-technologies-et-architecture)
    - 4.1 Choix des Technologies
-   - 4.2 Architecture du Projet
-   - 4.3 Intégration complète : Frontend Next.js + Backend C
-   - 4.4 Flow d'Exécution
-   - 4.5 Mapping des Algorithmes Frontend → Backend
+   - 4.2 Architecture du Projet  
+   - 4.3 Backend C : Mode Interactif vs Mode API
+   - 4.4 Intégration complète : Frontend Next.js + Backend C
+   - 4.5 Flow d'Exécution Complet
+   - 4.6 Mapping des Algorithmes Frontend → Backend
 
 ### **5. Déroulement du Développement SCRUM** ................... [Page 19](#5-déroulement-du-développement-scrum)
    - 5.1 Organisation Équipe
@@ -78,9 +103,10 @@
    - 5.7 Métriques SCRUM
 
 ### **6. Spécifications Techniques** ................................ [Page 22](#6-spécifications-techniques)
-   - 6.1 Point d'Entrée (main.c)
+   - 6.1 Point d'Entrée (main.c) : Modes Interactif et API
    - 6.2 Format Fichier Configuration
    - 6.3 Générateur Configuration Automatique
+   - 6.4 Fichiers Headers et Structures Partagées
 
 ### **7. Makefile et Compilation** .................................. [Page 27](#7-makefile-et-compilation)
    - 7.1 Objectif du Makefile
@@ -132,7 +158,7 @@ struct process {
     char name[NAME_LEN];        // Identification unique
     int arrival_time;           // Moment d'arrivée en système
     int exec_time;              // Durée totale CPU requise (immuable)
-    int priority;               // Priorité statique (GRANDE VALEUR = HAUTE PRIORITÉ)
+    int priority;               // Priorité statique (PETITE VALEUR = HAUTE PRIORITÉ, convention Unix)
     int remaining_time;         // Temps restant à exécuter (modifiable)
     int waiting_time;           // Temps d'attente cumulé
     int status;                 // État : READY(0), RUNNING(1), BLOCKED(2), ZOMBIE(3)
@@ -148,7 +174,7 @@ struct process {
 | `name[64]` | Identification lisible (P1, ProcessA, etc.) | Tous (affichage) |
 | `arrival_time` | Détermine quand le processus devient READY | FIFO, Priority, RR, Multilevel |
 | `exec_time` | Durée immuable totale | Métriques (calcul temps attente) |
-| `priority` | Support ordonnancement hiérarchique (**Grande valeur = haute priorité**) | Priority, Multilevel |
+| `priority` | Support ordonnancement hiérarchique (**Petite valeur = haute priorité**, convention Unix) | Priority, Multilevel |
 | `remaining_time` | Temps à exécuter (modifiable) | SRT, Priority, RR, Multilevel |
 | `waiting_time` | Métrique cumulative d'attente | Métriques finales |
 | `status` | Gestion des états (READY, RUNNING, ZOMBIE) | Tous les ordonnanceurs |
@@ -273,35 +299,52 @@ Cette fonction est responsable de trouver quel processus exécuter.
 
 #### Principe
 
-À chaque instant, le processus le plus prioritaire selon le mode choisi par l'utilisateur (valeur la plus grande ou la plus petite, la valeur la plus grande étant le mode par défaut) **préempte immédiatement** tout processus en cours d'exécution.
+À chaque instant, le processus le **plus prioritaire** **préempte immédiatement** tout processus en cours d'exécution.
+
+**⚠️ Convention de Priorité** :
+- **Mode Ascending (petite valeur = haute priorité)** — convention Unix.
+- **Mode Descending (grande valeur = haute priorité)** — optionnel.
+
+**Valeur par défaut selon le mode d'exécution :**
+- **CLI interactif** (`./ordonnanceur`) → **Descending** (valeur + grande = + prioritaire) car `prio_mode = 1` par défaut dans `main.c`.
+- **API Next.js** (`/api/schedule`) → **Ascending** (valeur + petite = + prioritaire) car la route passe `--prio-order asc`.
+
+Vous pouvez forcer le mode en CLI avec `--prio-order asc|desc`.
 
 #### Algorithme de Sélection et Simulation
 
-**Étape 0 : Initialiser une variable globale définissant le mode de priorité**
-- Par défaut, la valeur la plus grande correspond à la plus haute priorité
+**Étape 0 : Initialiser le mode de priorité**
+- Récupérer le paramètre `prio_mode` (passé en CLI / API) :
+  - `prio_mode = 0` → Ascending (petite valeur = haute prio)
+  - `prio_mode = 1` → Descending (grande valeur = haute prio)
+- **Défauts réels** :
+  - CLI (interactif) : `prio_mode` démarre à **1 (descending)** dans `main.c`
+  - API Next.js : la route passe `--prio-order asc` → `prio_mode = 0`
 
 **Étape 1 : Définir une fonction de sélection préemptive**
 
-Cette fonction permet de choisir le prochain processus à exécuter.
+Cette fonction permet de choisir le prochain processus à exécuter à chaque unité de temps.
 
 À l'intérieur de cette fonction :
 
 **1.1. Ignorer le processus actuellement en cours d'exécution**
-- Cela permet une préemption immédiate à chaque appel de la fonction
+- Cela permet une préemption immédiate si un meilleur processus devient disponible
 
-**1.2. Mettre à jour le mode global de priorité selon le choix de l'utilisateur**
-- Le mode peut être basé sur la valeur numérique la plus grande ou la plus petite
+**1.2. Préparer la recherche du processus le plus prioritaire**
+- Initialiser un indice "meilleur processus" à -1 (vide)
+- Initialiser une valeur extrême selon le mode :
+  - Mode Ascending : `best_priority = INT_MAX` (on cherche le minimum)
+  - Mode Descending : `best_priority = INT_MIN` (on cherche le maximum)
 
-**1.3. Préparer la recherche du processus le plus prioritaire**
-- Initialiser un indice "meilleur processus" à vide et une valeur extrême de priorité adaptée au mode choisi
+**1.3. Parcourir tous les processus**
+- **1.3.1.** Sélectionner uniquement ceux qui sont arrivés (`arrival_time <= time`) ET n'ont pas encore terminé (`remaining_time > 0`)
+- **1.3.2.** Comparer leur priorité selon le mode :
+  - Mode Ascending : si `priority < best_priority` → nouveau meilleur candidat
+  - Mode Descending : si `priority > best_priority` → nouveau meilleur candidat
+- **1.3.3.** Mettre à jour `best_priority` et l'indice du meilleur processus
 
-**1.4. Parcourir tous les processus**
-- **1.4.1.** Sélectionner uniquement ceux qui sont arrivés et n'ont pas encore terminé leur exécution
-- **1.4.2.** Comparer leur priorité avec la meilleure trouvée jusqu'à présent
-- **1.4.3.** Mettre à jour le processus sélectionné si sa priorité est meilleure selon le mode choisi (croissant ou décroissant)
-
-**1.5. Retourner l'indice du processus le plus prioritaire**
-- Retourner "aucun processus" (-1) si aucun n'est prêt
+**1.4. Retourner l'indice du processus le plus prioritaire**
+- Retourner -1 ("aucun processus prêt") si aucun n'est prêt
 
 **Étape 2 : Intégrer cette sélection dans la boucle principale de simulation**
 
@@ -313,9 +356,9 @@ Cette fonction permet de choisir le prochain processus à exécuter.
 - Exécuter ce processus pendant une unité de temps et décrémenter son temps restant
 
 **2.3. Sinon** :
-- Le processeur reste inactif
+- Le processeur reste inactif (CPU IDLE)
 
-**2.4. Incrémenter le temps et répéter**
+**2.4. Incrémenter le temps et répéter** jusqu'à ce que tous les processus soient terminés
 
 **Étape 3 : Générer les résultats finaux**
 
@@ -323,11 +366,10 @@ Cette fonction permet de choisir le prochain processus à exécuter.
 
 #### Modes de Priorité
 
-- **Mode Descending (par défaut)** : Valeur numérique plus grande = priorité plus haute
-  - Exemple : Priority 9 > Priority 0
-  
-- **Mode Ascending** : Valeur numérique plus petite = priorité plus haute
-  - Exemple : Priority 0 > Priority 9 (conventionnel Unix)
+| Mode | Valeur Haute Priorité | Exemple | Notes |
+|------|----------------------|---------|-------|
+| **Ascending** (défaut) | Valeur petite | 0 > 1 > 5 > 10 | ✓ Convention Unix standard |
+| **Descending** (variante) | Valeur grande | 10 > 5 > 1 > 0 | Utilisable via --prio-order desc |
 
 #### Avantages et Inconvénients
 
@@ -575,7 +617,7 @@ Pour chaque processus :
 
 Cet algorithme gère les processus en respectant une **hiérarchie stricte de priorité**, tout en assurant une équité entre les processus de même rang grâce au tourniquet (**Round-Robin**).
 
-**Convention de priorité** : Grande valeur = Haute Priorité (ex: 10 > 1)
+**Convention de priorité** : Petite valeur = Haute Priorité (ex: 1 > 10, conforme Unix)
 
 
 #### Algorithme de Sélection (fonction `select_multilevel`)
@@ -587,10 +629,10 @@ Cet algorithme gère les processus en respectant une **hiérarchie stricte de pr
 - `current` : indice du processus actuellement en cours (-1 si aucun)
 - `quantum_expired` : booléen indiquant si le quantum est expiré
 
-**Étape 1 : Identifier la Priorité Maximum des Processus Prêts**
+**Étape 1 : Identifier la Priorité MINIMUM des Processus Prêts** (convention Unix : petite = haute)
 
 Initialiser :
-- `best_prio = -1` (priorité maximum trouvée)
+- `best_prio = INT_MAX` (très grande valeur, on cherche le minimum)
 - `processes_ready = 0` (flag indiquant si au moins un processus est prêt)
 
 Parcourir tous les processus :
@@ -599,19 +641,19 @@ Parcourir tous les processus :
   - `remaining_time > 0` (pas encore terminé)
   
 - Si processus prêt :
-  - Si `priority > best_prio` → mettre à jour `best_prio`
+  - Si `priority < best_prio` → mettre à jour `best_prio` (on cherche la PETITE valeur)
   - Marquer `processes_ready = 1`
 
 Si aucun processus prêt (`processes_ready == 0`) → **Retourner -1 (CPU IDLE)**
 
-**Étape 2 : Logique Round-Robin pour la Priorité Maximum**
+**Étape 2 : Logique Round-Robin pour la Priorité MINIMUM**
 
 **2.1. Vérifier si le processus courant peut continuer**
 
 Si **toutes** les conditions suivantes sont vraies :
 - `current != -1` (un processus est en cours)
 - `procs[current].remaining_time > 0` (pas encore terminé)
-- `procs[current].priority == best_prio` (a toujours la meilleure priorité)
+- `procs[current].priority == best_prio` (a toujours la meilleure priorité = même valeur petite)
 - `procs[current].arrival_time <= time` (toujours valide)
 - `!quantum_expired` (quantum non expiré)
 
@@ -624,7 +666,7 @@ Si **toutes** les conditions suivantes sont vraies :
 
 Pour `i = 0` à `n-1` :
 - `idx = (start_index + i) % n` (parcours circulaire)
-- Si processus `idx` est prêt ET a la priorité `best_prio` :
+- Si processus `idx` est prêt ET a la priorité `best_prio` (même priorité minimum) :
   - **Retourner `idx`** (prochain processus à exécuter)
 
 Si aucun candidat trouvé → **Retourner -1**
@@ -665,18 +707,18 @@ La politique **Multilevel Dynamic** utilise la même fonction de sélection que 
 
 **Logique de sélection** :
 
-**Étape 1 : Trouver la priorité maximum parmi les processus prêts**
-- Initialiser `best_prio = -1`
+**Étape 1 : Trouver la priorité MINIMUM parmi les processus prêts** (convention Unix : petite = haute)
+- Initialiser `best_prio = INT_MAX` (valeur très grande)
 - Parcourir tous les processus
 - Si `arrival_time <= time` ET `remaining_time > 0` :
-  - Si `priority > best_prio` → mettre à jour `best_prio`
+  - Si `priority < best_prio` → mettre à jour `best_prio` (on cherche la PETITE valeur)
 - Si aucun processus prêt → retourner -1 (IDLE)
 
 **Étape 2 : Continuer le processus courant si possible**
 - Si **toutes** les conditions suivantes sont vraies :
   - `current != -1` (un processus est en cours)
   - `procs[current].remaining_time > 0` (pas encore terminé)
-  - `procs[current].priority == best_prio` (a toujours la meilleure priorité)
+  - `procs[current].priority == best_prio` (a toujours la meilleure priorité = même valeur petite)
   - `procs[current].arrival_time <= time` (toujours valide)
   - `!quantum_expired` (quantum non expiré)
 - → Retourner `current` (continuer le même processus)
@@ -684,7 +726,7 @@ La politique **Multilevel Dynamic** utilise la même fonction de sélection que 
 **Étape 3 : Sinon, Round-Robin circulaire**
 - `start_index = (current + 1) % n`
 - Parcourir circulairement de `start_index`
-- Trouver le premier processus avec `priority == best_prio`
+- Trouver le premier processus avec `priority == best_prio` (même priorité minimum)
 - Retourner son indice (ou -1 si aucun)
 
 #### Implémentation du Feedback Loop (boucle de simulation)
@@ -947,6 +989,58 @@ Projet-Ordonnancement-Linux-arij-dev/
         └──────────────────────────┘
 ```
 
+### 4.3 Backend C : Mode Interactif vs Mode API
+
+#### **Mode Interactif (CLI)**
+
+Le backend C supporte deux modes opérationnels :
+
+**Mode 1: CLI Interactif (Menu)**
+```bash
+./ordonnanceur
+# OU
+./ordonnanceur [chemin_fichier_config.txt]
+```
+
+**Fonctionnement** :
+- Affiche un menu interactif à l'utilisateur
+- Permet de générer automatiquement des processus
+- Permet de charger un fichier de configuration existant
+- Affiche les résultats en texte sur stdout (Gantt textuel, statistiques)
+- **Mode principal pour utilisation en ligne de commande**
+
+#### **Mode API (Programmable)**
+
+```bash
+./ordonnanceur --api --config <fichier> --algo <algo> [--quantum <q>] [--prio-order <asc|desc>]
+```
+
+**Fonctionnement** :
+- N'affiche QUE du JSON structuré sur stdout
+- Aucune interaction utilisateur
+- Conçu pour être appelé par des scripts ou applications
+- **Utilisé par les API routes Next.js**
+
+**Flags disponibles** :
+| Flag | Valeurs | Obligatoire | Exemple |
+|------|---------|-------------|---------|
+| `--api` | N/A | ✓ | `--api` |
+| `--config` | Chemin fichier | ✓ | `--config config/sample.txt` |
+| `--algo` | fifo, priority, roundrobin, srt, multilevel, multilevel_dynamic | ✓ | `--algo roundrobin` |
+| `--quantum` | Entier > 0 | Pour RR et multilevel_dynamic | `--quantum 4` |
+| `--prio-order` | asc, desc | Pour priority | `--prio-order asc` |
+| `--parse-config` | Chemin fichier | Alternatif à --api | `--parse-config config.txt` |
+
+**Mode parse-config** (cas particulier) :
+```bash
+./ordonnanceur --parse-config <fichier>
+```
+- Parse le fichier de configuration
+- Retourne UNIQUEMENT un JSON array de processus
+- Utilisé pour valider les fichiers avant simulation
+
+---
+
 ### 4.3 Intégration complète : Frontend Next.js + Backend C
 
 #### **Composants Frontend (React)**
@@ -1001,7 +1095,7 @@ Projet-Ordonnancement-Linux-arij-dev/
 - Sortie JSON structurée sur stdout
 - Parsée immédiatement par route Next.js → envoyée au client React
 
-### 4.4 Flow d'Exécution Complet
+### 4.5 Flow d'Exécution Complet
 
 **Frontend → Backend → Frontend :**
 
@@ -1055,46 +1149,53 @@ Projet-Ordonnancement-Linux-arij-dev/
           └───────────────────────────────────────────────┘
 ```
 
-### 4.5 Mapping des Algorithmes Frontend → Backend
+### 4.6 Mapping des Algorithmes Frontend → Backend
 
 | Frontend Name | Backend Name | Mode | Quantum | Priority Order | Notes |
 |--|--|--|--|--|--|
-| fifo | fifo | Basic | N/A | N/A | First In First Out |
-| sjf | srt | Real-time | N/A | N/A | Shortest Remaining Time |
-| static-priority | priority | Preset | N/A | asc/desc | Fixed priority, no aging |
-| dynamic-priority | priority | Dynamic | N/A | asc/desc | Priority with aging |
+| fifo | fifo | Stateless | N/A | N/A | First In First Out |
+| sjf | srt | Stateless | N/A | N/A | Shortest Remaining Time |
+| static-priority | priority | Fixed Mode | N/A | Ascending (API défaut) | ✓ Pas d'aging dans le backend |
+| dynamic-priority | priority | Fixed Mode | N/A | Ascending (API défaut) | Même backend `priority` (pas d'aging backend) |
 | round-robin | roundrobin | Preemptive | ✓ Required | N/A | Time slice based |
-| multilevel | multilevel | Static | N/A | N/A | Multiple queues, no migration |
-| multilevel-dynamic-priority | multilevel_dynamic | Dynamic | ✓ Optional | N/A | Queues + aging + final_priority column |
+| multilevel | multilevel | Static | N/A | N/A | Multiple queues, NO migration |
+| multilevel-dynamic-priority | multilevel_dynamic | Dynamic | ✓ Optional | N/A | Queues + aging + final_priority |
 
-**Code (`app/api/schedule/route.ts` - `mapAlgorithm()` function):**
+**Notes Importantes** :
+- ✓ `static-priority` et `dynamic-priority` **utilisent le MÊME backend** (`priority`).
+- ✓ Par défaut : **API** envoie `--prio-order asc` (petite valeur = haute prio) ; **CLI** sans flag reste en descending (valeur grande = haute prio).
+- ✓ La différence entre `static` et `dynamic` est **UI-side uniquement** (visualisation d'aging côté frontend).
+- ✓ Le backend Priority n'a PAS d'aging intégré (pas de modification de priorité avec le temps).
+- ✓ `multilevel_dynamic` a l'aging vrai **au backend** (modifications réelles des priorités).
+- ✓ Seul `multilevel_dynamic` retourne `final_priority` dans les résultats JSON.
+
+**Code (`app/api/schedule/route.ts` - mapping réel):**
+
 ```typescript
-function mapAlgorithm(config: AlgorithmConfig) {
-  const mappings: Record<string, { name: string; prioMode?: number }> = {
-    fifo: { name: "fifo" },
-    sjf: { name: "srt" },
-    "static-priority": { name: "priority", prioMode: 1 },  // 1 = descending
-    "dynamic-priority": { name: "priority", prioMode: 0 }, // 0 = ascending
-    "round-robin": { name: "roundrobin" },
-    multilevel: { name: "multilevel" },
-    "multilevel-dynamic-priority": { name: "multilevel_dynamic" }
-  };
-  return mappings[config.algorithm];
-}
+// Mode Ascending (par défaut pour priority)
+const args = ["--api", "--config", tmpPath, "--algo", "priority", "--prio-order", "asc"]
+
+// Les deux options frontend "static-priority" et "dynamic-priority" 
+// utilisent EXACTEMENT le même appel backend
+// La distinction est uniquement au niveau presentation (frontend)
 ```
 
 **CLI arguments construction:**
 ```typescript
-const args = ["--api", "--config", tmpPath, "--algo", mapped.name];
-if (mapped.prioMode !== undefined) args.push("--prio-order", mapped.prioMode === 1 ? "desc" : "asc");
-if (config.quantum) args.push("--quantum", config.quantum.toString());
+const args = ["--api", "--config", tmpPath, "--algo", mappedAlgo]
+if (mappedAlgo === "roundrobin" || mappedAlgo === "multilevel_dynamic") {
+  args.push("--quantum", config.quantum || "4")
+}
+if (mappedAlgo === "priority") {
+  args.push("--prio-order", "asc")  // Mode défaut
+}
 ```
 
 **Key Points:**
-- ✓ `static-priority` et `dynamic-priority` partagent le backend `priority`, différenciés par `--prio-order`
-- ✓ `multilevel-dynamic-priority` seul expose la colonne **Priorité Finale** (aging visible)
+- ✓ `static-priority` et `dynamic-priority` → appel identique `priority` au backend
+- ✓ `multilevel-dynamic-priority` seul expose colonne **Priorité Finale** (aging visible)
 - ✓ Frontend dropdown = 7 options ; Backend = 6 algos (priority compte pour 2)
-- ✓ Quantum requis pour RR et multilevel_dynamic
+- ✓ Quantum REQUIS pour RR et multilevel_dynamic
 - ✓ JSON API output inclut `finalPriority` pour multilevel_dynamic uniquement
 
 ---
@@ -1203,13 +1304,50 @@ if (config.quantum) args.push("--quantum", config.quantum.toString());
 
 ## 6. Spécifications Techniques : Point d'Entrée, Parser et Générateur
 
-### 6.1 Point d'Entrée (main.c)
+### 6.1 Point d'Entrée (main.c) : Modes Interactif et API
 
-#### But
+#### Vue d'ensemble des Modes d'Opération
 
-Gérer l'interface utilisateur (menu interactif) et orchestrer le flux d'exécution du programme.
+Le backend C (`ordonnanceur`) supporte **3 modes d'opération** :
 
-#### Étapes du Programme Principal
+| Mode | Commande | Utilisateur | Output | Cas d'Usage |
+|------|----------|-----------|--------|-----------|
+| **Interactif** | `./ordonnanceur` | Humain | Texte + Gantt textuel | CLI local |
+| **Direct File** | `./ordonnanceur [fichier]` | Humain | Texte + Gantt textuel | Script shell rapide |
+| **API** | `./ordonnanceur --api --config ... --algo ...` | Programme/Script | JSON structuré | Routes Next.js |
+| **Parse Only** | `./ordonnanceur --parse-config [fichier]` | Programme/Script | JSON array | Validation fichiers |
+
+---
+
+#### Mode 1 : CLI Interactif (Menu Principal)
+
+#### Étapes du Programme Principal (Mode Interactif)
+
+**Étape 0 : Détection du Mode d'Opération**
+
+À la première ligne de `main()` :
+- **Si aucun argument** (`argc == 1`) → Mode Interactif (menu)
+- **Si un argument non-flag** (`argc == 2` et `argv[1][0] != '-'`) → Mode Direct File (fichier passé directement)
+- **Si flags détectés** (`--api`, `--parse-config`, `--config`) → Mode API (sortie JSON)
+
+```c
+if (argc == 2 && argv[1][0] != '-') {
+    direct_file_mode = 1;  // Mode: ./ordonnanceur config.txt
+    strncpy(filename, argv[1], sizeof(filename) - 1);
+}
+```
+
+Ensuite, parcourir tous les arguments pour capturer les flags API :
+```c
+for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--api") == 0) { api_mode = 1; }
+    else if (strcmp(argv[i], "--parse-config") == 0) { parse_only = 1; }
+    else if (strcmp(argv[i], "--config") == 0) { /* read filename */ }
+    else if (strcmp(argv[i], "--algo") == 0) { /* read algo name */ }
+    else if (strcmp(argv[i], "--quantum") == 0) { /* read quantum */ }
+    else if (strcmp(argv[i], "--prio-order") == 0) { /* read asc|desc */ }
+}
+```
 
 **Étape 1 : Affichage du Menu Interactif**
 
@@ -1298,6 +1436,84 @@ Gérer l'interface utilisateur (menu interactif) et orchestrer le flux d'exécut
 - Appeler `free(list)` pour libérer le tableau de processus
 - Retourner 0 (succès)
 
+---
+
+#### Mode 2 : Direct File Mode (Fichier en Arguments)
+
+**Comportement** : `./ordonnanceur config/sample_config.txt`
+
+**Différence avec Mode Interactif** :
+- Saute le menu initial
+- Charge directement le fichier fourni en argument
+- Affiche le contenu du fichier
+- Affiche le menu de sélection de politique
+- Exécute la simulation et affiche résultats (texte + Gantt)
+
+**Avantage** : Utile pour scripts shell automatisés sans intervention utilisateur.
+
+---
+
+#### Mode 3 : API Mode (Mode Programmable JSON)
+
+**Comportement** : `./ordonnanceur --api --config <file> --algo <algo> [--quantum <q>] [--prio-order <asc|desc>]`
+
+**Ou en cas de Parse Only** : `./ordonnanceur --parse-config <file>`
+
+**Différence avec Modes Interactifs** :
+- Aucune interaction utilisateur
+- Sortie **UNIQUEMENT** JSON structuré sur stdout
+- Pas d'affichage de menu, pas de Gantt textuel
+- Erreurs en JSON format (pour faciliter parsing)
+- Conçu pour appels programmatiques
+
+**Étapes Internes (Mode API)** :
+
+1. **Parsing des flags** (déjà fait à Étape 0)
+2. **Vérification si parse_only** :
+   - Si oui : parser le fichier → retourner JSON array des processus → terminer
+   - Si non : continuer au scheduler
+3. **Vérification si api_mode** :
+   - Si non : mode interactif classique
+   - Si oui : continuer mode API
+4. **Chargement de la configuration** :
+   - Appeler `parse_config_file(config_path, &list, &n)`
+   - Si erreur : `printf("{\"error\":\"Failed to parse config\"}\n")`
+5. **Création de la structure d'options** :
+   ```c
+   struct scheduler_options opts = {
+       .algorithm = algo,        // "fifo", "priority", "roundrobin", etc.
+       .quantum = quantum,       // pour RR et multilevel_dynamic
+       .prio_mode = prio_mode    // 0 = asc, 1 = desc
+   };
+   ```
+6. **Appel au scheduler mode API** :
+   - Appeler `run_scheduler_api(list, n, &opts, &result)`
+   - Cette fonction remplit `result` avec :
+     - `gantt_segment[]` : allocation CPU par temps
+     - `process_stat[]` : statistiques par processus
+     - `average_wait`, `makespan` : métriques globales
+7. **Sortie JSON** :
+   - Appeler `print_json_result(&result)`
+   - Affiche JSON structuré sur stdout
+   - API route Next.js parse ce JSON
+
+**Exemple de sortie JSON (Mode API)** :
+```json
+{
+  "algorithm": "roundrobin",
+  "ganttData": [
+    { "process": "P1", "start": 0, "end": 4 },
+    { "process": "P2", "start": 4, "end": 8 },
+    { "process": "P1", "start": 8, "end": 10 }
+  ],
+  "processStats": [
+    { "id": "P1", "arrivalTime": 0, "executionTime": 10, "finishTime": 10, "waitTime": 0 },
+    { "id": "P2", "arrivalTime": 2, "executionTime": 6, "finishTime": 8, "waitTime": 0 }
+  ],
+  "averageWait": 0,
+  "makespan": 10
+}
+```
 
 ### 6.2 Format Fichier Configuration
 
@@ -1530,6 +1746,183 @@ Pour chaque processus i de 1 à nb_processes :
 - **Validité** : Fichier généré est automatiquement **valide** (respecte toutes les règles)
 - **Sortie** : Affichage confirmation + chemin fichier
 
+### 6.4 Fichiers Headers et Structures Partagées
+
+#### But
+
+Documenter les fichiers headers (`.h`) qui définnisent les structures et prototypes partagés entre les modules C.
+
+#### `include/process.h`
+
+Définit la **structure centrale** représentant un processus.
+
+```c
+#ifndef PROCESS_H
+#define PROCESS_H
+
+#define NAME_LEN 64          // Longueur max du nom de processus
+#define READY 0              // État : processus prêt
+#define RUNNING 1            // État : processus en cours
+#define BLOCKED 2            // État : processus bloqué
+#define ZOMBIE 3             // État : processus terminé
+
+struct process {
+    char name[NAME_LEN];     // Nom unique du processus (ex: "P1")
+    int arrival_time;        // Temps d'arrivée >= 0
+    int exec_time;           // Durée totale d'exécution, > 0 (immuable)
+    int priority;            // Priorité (convention Unix: petite = haute)
+    int remaining_time;      // Temps restant à exécuter (modifiable)
+    int waiting_time;        // Temps total d'attente cumulé
+    int status;              // État actuel (READY/RUNNING/BLOCKED/ZOMBIE)
+    int end_time;            // Temps de fin d'exécution (pour métriques)
+    int wait_time;           // Compteur temporaire pour aging (Multilevel)
+};
+
+#endif
+```
+
+**Utilisation** : Inclus par `scheduler.h`, `parser.h`, et tous les fichiers de politiques.
+
+#### `include/scheduler.h`
+
+Définit les structures de **résultats de simulation** et les prototypes de fonctions de scheduling.
+
+```c
+#ifndef SCHEDULER_H
+#define SCHEDULER_H
+
+#define MAX_SEGMENTS 2048    // Nombre max de segments Gantt
+
+struct gantt_segment {
+    char process[NAME_LEN];  // Nom du processus exécuté
+    int start;               // Temps de début
+    int end;                 // Temps de fin
+};
+
+struct process_stat {
+    char id[NAME_LEN];       // ID du processus
+    int arrival_time;        // Temps d'arrivée
+    int exec_time;           // Durée d'exécution totale
+    int finish_time;         // Temps de fin réel
+    int wait_time;           // Temps d'attente calculé
+    int priority;            // Priorité initiale
+    int final_priority;      // Priorité finale (Multilevel Dynamic uniquement)
+};
+
+struct simulation_result {
+    char algorithm[64];                           // Nom algo exécuté
+    struct gantt_segment segments[MAX_SEGMENTS];  // Timeline CPU
+    int segment_count;                            // Nombre de segments
+    struct process_stat stats[256];               // Stats par processus
+    int stat_count;                               // Nombre de processus
+    double average_wait;                          // Temps d'attente moyen
+    int makespan;                                 // Temps total simulation
+};
+
+struct scheduler_options {
+    const char *algorithm;   // Nom algo: "fifo", "priority", "roundrobin", "srt", "multilevel", "multilevel_dynamic"
+    int quantum;             // Quantum pour RR et multilevel_dynamic
+    int prio_mode;           // 0=ascending (Unix, défaut), 1=descending
+};
+
+// Déclarations de fonctions publiques
+void load_policies();                             // Initialise les politiques
+int choose_policy();                              // Menu sélection politique
+void run_scheduler(struct process *, int, int);  // Mode interactif
+int run_scheduler_api(struct process *, int, const struct scheduler_options *, struct simulation_result *);
+void print_json_result(const struct simulation_result *); // Output JSON
+
+// Prototypes des simulations pour chaque algorithme
+void fifo_simulation(struct process *, int);
+void priority_simulation(struct process *, int, int);    // int = prio_mode
+void rr_simulation(struct process *, int);               // Quantum dans struct process
+void multilevel_simulation(struct process *, int, int);  // int = quantum
+void multilevel_dynamic_simulation(struct process *, int, int); // int = quantum
+void srt_simulation(struct process *, int);
+
+#endif
+```
+
+**Utilisation** : Inclus par `src/scheduler.c` (orchestrateur) et `src/main.c` (point d'entrée).
+
+#### `include/parser.h`
+
+Définit les prototypes de **parsing de fichiers** de configuration.
+
+```c
+#ifndef PARSER_H
+#define PARSER_H
+
+#include "process.h"
+
+// Parsing principal
+int parse_config_file(const char *filename, struct process **out, int *out_n);
+
+// Utilitaires
+void display_config_file(const char *filename);  // Affiche contenu brut fichier
+int validate_process(struct process *p);         // Valide structure processus
+
+#endif
+```
+
+**Utilisé par** : `src/main.c` et `app/api/parse-config/route.ts`.
+
+#### `include/utils.h`
+
+Définit les fonctions **utilitaires** (affichage, JSON, tableaux, etc.).
+
+```c
+#ifndef UTILS_H
+#define UTILS_H
+
+#include "scheduler.h"
+
+// Affichage Gantt textuel
+void print_gantt(struct gantt_segment *, int);
+void print_statistics(struct process_stat *, int, double, int);
+
+// Sérialisation JSON (mode API)
+void print_json_result(const struct simulation_result *);
+
+// Utilitaires mémoire
+void free_processes(struct process *);
+
+#endif
+```
+
+#### `include/generate_config.h`
+
+Définit le générateur de **configurations aléatoires**.
+
+```c
+#ifndef GENERATE_CONFIG_H
+#define GENERATE_CONFIG_H
+
+int generate_config(const char *filename);  // filename peut inclure chemins + timestamp
+
+#endif
+```
+
+#### Dépendances Entre Headers
+
+```
+process.h
+    ↓
+scheduler.h ← includes process.h
+parser.h    ← includes process.h
+utils.h     ← includes scheduler.h
+generate_config.h
+    ↓
+Toutes les politiques (*.c) incluent scheduler.h
+```
+
+#### Convention de Naming
+
+- **Structures** : `struct nom_descriptif` (ex: `struct process`, `struct gantt_segment`)
+- **Constantes** : `UPPER_CASE` (ex: `READY`, `NAME_LEN`, `MAX_SEGMENTS`)
+- **Fonctions** : `snake_case` (ex: `parse_config_file`, `print_gantt`, `fifo_simulation`)
+- **Fichiers** : `snake_case.h` ou `.c` (ex: `priority_preemptive.c`, `utils.c`)
+
 ## 7. Makefile et Compilation
 
 ### 7.1 Objectif du Makefile
@@ -1538,8 +1931,9 @@ Le Makefile permet de :
 - **Compiler automatiquement** l'exécutable `ordonnanceur` à partir des fichiers source
 - **Générer les fichiers objets** (.o) dans `build/`
 - **Faciliter le nettoyage** du projet (remove objets, exécutables)
-- **Lancer les tests** unitaires
 - **Éviter la compilation manuelle** (pas besoin de taper gcc à chaque fois)
+
+### 7.2 Variables Principales
 
 | Variable | Signification | Valeur | Utilité |
 |----------|---------------|--------|---------|
