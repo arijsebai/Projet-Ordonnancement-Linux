@@ -99,14 +99,14 @@
 
 | Figure | Description | Page |
 |--------|-------------|------|
-| **Figure 4.1** | Interface principale avec sélection d'algorithme et gestion des processus | [→](#451-interface-principale--sélection-et-configuration) |
-| **Figure 4.2** | Diagramme de Gantt avec contrôles interactifs et légende d'états | [→](#452-visualisation-gantt--timeline-dexécution-interactive) |
-| **Figure 4.3** | Suivi des états des processus au fil du temps | [→](#453-diagramme-détat-des-processus) |
-| **Figure 4.4** | Analyse de la répartition du temps CPU par processus | [→](#454-répartition-cpu--diagramme-circulaire) |
-| **Figure 4.5** | Comparaison graphique des métriques de performance | [→](#455-comparaison-statistiques--graphique-à-barres) |
-| **Figure 4.6** | Tableau statistiques avec toutes les métriques de performance | [→](#456-tableau-récapitulatif--données-détaillées) |
-| **Figure 4.7** | Interface de génération automatique de configurations | [→](#457-génération-automatique--configuration) |
-| **Figure 4.8** | Zone d'upload avec validation et aperçu des processus | [→](#458-upload-et-validation--fichier-configuration) |
+| **Figure 4.1** | Interface principale avec sélection d'algorithme et gestion des processus | [18](#451-interface-principale--sélection-et-configuration) |
+| **Figure 4.2** | Diagramme de Gantt avec contrôles interactifs et légende d'états | [18](#452-visualisation-gantt--timeline-dexécution-interactive) |
+| **Figure 4.3** | Suivi des états des processus au fil du temps | [19](#453-diagramme-détat-des-processus) |
+| **Figure 4.4** | Analyse de la répartition du temps CPU par processus | [19](#454-répartition-cpu--diagramme-circulaire) |
+| **Figure 4.5** | Comparaison graphique des métriques de performance | [19](#455-comparaison-statistiques--graphique-à-barres) |
+| **Figure 4.6** | Tableau statistiques avec toutes les métriques de performance | [20](#456-tableau-récapitulatif--données-détaillées) |
+| **Figure 4.7** | Interface de génération automatique de configurations | [20](#457-génération-automatique--configuration) |
+| **Figure 4.8** | Zone d'upload avec validation et aperçu des processus | [20](#458-upload-et-validation--fichier-configuration) |
 
 
 <div style="page-break-after: always;"></div>
