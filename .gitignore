@@ -75,3 +75,7 @@ out/
 
 # pnpm
 .pnpm-debug.log*
+
+# Binaires de test non trackés
+test_*
+mon_test_*

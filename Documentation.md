@@ -364,16 +364,12 @@ Chaque processus reçoit un **quantum** de temps fixe (configurable par l'utilis
 
 Parcourir tous les processus :
 - **Critères d'ajout** :
-  - `arrival_time <= time` (processus déjà arrivé)
+  - `arrival_time == time` (processus qui arrive exactement à cet instant)
   - `remaining_time > 0` (processus non terminé)
-  - `end_time == -1` (processus pas encore complété)
-  - **Processus pas déjà présent dans la queue** (vérification explicite)
 
-- **Mécanisme de détection de duplication** :
-  - Pour chaque candidat, parcourir la queue actuelle `[head, tail)`
-  - Vérifier si l'indice du processus est déjà dans `ready[j]`
-  - Si trouvé → `in_queue = 1`, ne pas ajouter
-  - Si non trouvé → ajouter `ready[tail++] = i`
+- **Mécanisme d'ajout** :
+  - Si les critères sont remplis → ajouter `ready[tail++] = i`
+  - ⚠️ **Note d'implémentation** : Le code actuel n'implémente pas de vérification de duplication explicite, ce qui peut théoriquement causer des ajouts multiples si la logique de gestion de queue n'est pas rigoureuse
 
 **2.2. Vérifier si la queue est vide**
 - Si `head == tail` (queue vide, aucun processus prêt) :
@@ -399,9 +395,10 @@ Parcourir tous les processus :
   - Nom du processus en cours d'exécution
   - Contenu de la ready queue : `"name:remaining_time"` séparés par virgules
 
-**3.4. Mettre à jour le waiting_time**
-- Pour tous les processus **encore en queue** (de `head` à `tail`) :
-  - `waiting_time += run` (ils attendent pendant que `curr` s'exécute pendant `run` unités)
+**3.4. Calcul du waiting_time**
+- ⚠️ **Note d'implémentation** : Le temps d'attente est calculé à la fin de la simulation avec la formule :
+  - `wait_time = finish - arrival_time - exec_time`
+- Cette approche utilise le calcul final plutôt qu'une accumulation incrémentale pendant l'exécution
 
 **3.5. Exécuter le processus**
 - `remaining_time -= run` (décrémenter le temps restant)
@@ -559,7 +556,9 @@ Pour chaque processus :
 
 Cet algorithme gère les processus en respectant une **hiérarchie stricte de priorité**, tout en assurant une équité entre les processus de même rang grâce au tourniquet (**Round-Robin**).
 
-**Convention de priorité** : Petite valeur = Haute Priorité (ex: 1 > 10, conforme Unix)
+**Convention de priorité** : Grande valeur = Haute Priorité (ex: 10 > 1)
+
+⚠️ **Note** : Cette convention est inversée par rapport au standard Unix où petite valeur = haute priorité. Notre implémentation utilise la logique inverse pour simplification.
 
 
 #### Algorithme de Sélection (fonction `select_multilevel`)
@@ -571,10 +570,10 @@ Cet algorithme gère les processus en respectant une **hiérarchie stricte de pr
 - `current` : indice du processus actuellement en cours (-1 si aucun)
 - `quantum_expired` : booléen indiquant si le quantum est expiré
 
-**Étape 1 : Identifier la Priorité MINIMUM des Processus Prêts** (convention Unix : petite = haute)
+**Étape 1 : Identifier la Priorité MAXIMUM des Processus Prêts** (convention : grande = haute)
 
 Initialiser :
-- `best_prio = INT_MAX` (très grande valeur, on cherche le minimum)
+- `best_prio = -1` (très petite valeur, on cherche le maximum)
 - `processes_ready = 0` (flag indiquant si au moins un processus est prêt)
 
 Parcourir tous les processus :
@@ -583,7 +582,7 @@ Parcourir tous les processus :
   - `remaining_time > 0` (pas encore terminé)
   
 - Si processus prêt :
-  - Si `priority < best_prio` → mettre à jour `best_prio` (on cherche la PETITE valeur)
+  - Si `priority > best_prio` → mettre à jour `best_prio` (on cherche la GRANDE valeur)
   - Marquer `processes_ready = 1`
 
 Si aucun processus prêt (`processes_ready == 0`) → **Retourner -1 (CPU IDLE)**
@@ -595,7 +594,7 @@ Si aucun processus prêt (`processes_ready == 0`) → **Retourner -1 (CPU IDLE)*
 Si **toutes** les conditions suivantes sont vraies :
 - `current != -1` (un processus est en cours)
 - `procs[current].remaining_time > 0` (pas encore terminé)
-- `procs[current].priority == best_prio` (a toujours la meilleure priorité = même valeur petite)
+- `procs[current].priority == best_prio` (a toujours la meilleure priorité = même valeur grande)
 - `procs[current].arrival_time <= time` (toujours valide)
 - `!quantum_expired` (quantum non expiré)
 
@@ -608,7 +607,7 @@ Si **toutes** les conditions suivantes sont vraies :
 
 Pour `i = 0` à `n-1` :
 - `idx = (start_index + i) % n` (parcours circulaire)
-- Si processus `idx` est prêt ET a la priorité `best_prio` (même priorité minimum) :
+- Si processus `idx` est prêt ET a la priorité `best_prio` (même priorité maximum) :
   - **Retourner `idx`** (prochain processus à exécuter)
 
 Si aucun candidat trouvé → **Retourner -1**
@@ -647,18 +646,18 @@ La politique **Multilevel Dynamic** utilise la même fonction de sélection que 
 
 **Logique de sélection** :
 
-**Étape 1 : Trouver la priorité MINIMUM parmi les processus prêts** (convention Unix : petite = haute)
-- Initialiser `best_prio = INT_MAX` (valeur très grande)
+**Étape 1 : Trouver la priorité MAXIMUM parmi les processus prêts** (convention : grande = haute)
+- Initialiser `best_prio = -1` (valeur très petite)
 - Parcourir tous les processus
 - Si `arrival_time <= time` ET `remaining_time > 0` :
-  - Si `priority < best_prio` → mettre à jour `best_prio` (on cherche la PETITE valeur)
+  - Si `priority > best_prio` → mettre à jour `best_prio` (on cherche la GRANDE valeur)
 - Si aucun processus prêt → retourner -1 (IDLE)
 
 **Étape 2 : Continuer le processus courant si possible**
 - Si **toutes** les conditions suivantes sont vraies :
   - `current != -1` (un processus est en cours)
   - `procs[current].remaining_time > 0` (pas encore terminé)
-  - `procs[current].priority == best_prio` (a toujours la meilleure priorité = même valeur petite)
+  - `procs[current].priority == best_prio` (a toujours la meilleure priorité = même valeur grande)
   - `procs[current].arrival_time <= time` (toujours valide)
   - `!quantum_expired` (quantum non expiré)
 - → Retourner `current` (continuer le même processus)
@@ -666,7 +665,7 @@ La politique **Multilevel Dynamic** utilise la même fonction de sélection que 
 **Étape 3 : Sinon, Round-Robin circulaire**
 - `start_index = (current + 1) % n`
 - Parcourir circulairement de `start_index`
-- Trouver le premier processus avec `priority == best_prio` (même priorité minimum)
+- Trouver le premier processus avec `priority == best_prio` (même priorité maximum)
 - Retourner son indice (ou -1 si aucun)
 
 #### Implémentation du Feedback Loop (boucle de simulation)
@@ -746,16 +745,146 @@ Calculer :
 
 ## 4. Technologies et Architecture
 
-### 4.1 Choix des Technologies
+### 4.1 Stack Technologique Complet
 
-| Technologie | Justification | Bénéfices |
-|-------------|--------------|----------|
-| **Langage C** | Requis ; bas niveau ; standard académique | Proximité système, performance |
-| **Git + GitHub** | Contrôle version ; collaboration ; historique | Traçabilité modifications |
-| **Scrum/Agile** | Gestion itérative ; sprints ; équipe | Planification adaptable |
-| **Trello** | Tableau Kanban ; visualisation tâches | Suivi avancement temps réel |
-| **Microsoft Teams** | Communication équipe ; réunions | Coordination synchrone |
-| **VS Code** | IDE léger ; plugins C ; compilation intégrée | Productivité développement |
+#### A. Frontend (Web UI Moderne)
+
+| Technologie | Version | Rôle | Justification |
+|-------------|---------|------|--------------|
+| **Next.js** | 16.0.3 | Framework React SSR + routing | Production-ready, performance optimale |
+| **React** | 19.2.0 | UI library composants | Modern hooks, state management |
+| **TypeScript** | ^5 | Typage static | Sécurité types, refactoring facile |
+| **Tailwind CSS** | ^4.1.9 | Utility-first CSS | Styling rapide, responsive design |
+| **Radix UI** | ~1.x | Composants accessibles | Boutons, dialogs, tabs, forms |
+| **Recharts** | latest | Visualisation données | Gantt, pie/bar charts interactifs |
+| **Sonner** | ^1.7.4 | Toast notifications | Feedback utilisateur |
+| **next-themes** | ^0.4.6 | Dark/Light theme | Thème UI persistant |
+| **zod** | 3.25.76 | Validation schémas | Validation configs uploads |
+| **React Hook Form** | ^7.60.0 | Gestion formulaires | Forms performantes |
+
+#### B. Backend (Moteur Simulation C)
+
+| Technologie | Version | Rôle | Justification |
+|-------------|---------|------|--------------|
+| **C** | C11 | Langage implémentation | Requis, bas niveau, performance |
+| **GCC** | 9.4.0 | Compilateur | Standard Linux, optimisé |
+| **Make** | 4.2.1 | Build automation | Compilation incrémentale |
+| **POSIX** | Standard | API système | Portabilité Linux/Unix |
+
+#### C. Build & Package Management (Frontend)
+
+| Technologie | Version | Rôle | Justification |
+|-------------|---------|------|--------------|
+| **pnpm** | 10.24.0 | Package manager | Plus rapide/efficace que npm |
+| **Node.js** | 20.19.6 | Runtime JavaScript | Exécution Next.js, APIs |
+| **npm/corepack** | 10.8.2 | Package install | Gestion dépendances |
+| **Turbopack** | Intégré | Bundler Next.js | Compilation ultra-rapide |
+| **PostCSS** | ^8.5 | CSS processing | Tailwind compilation |
+
+#### D. Tooling & Développement
+
+| Technologie | Version | Rôle | Justification |
+|-------------|---------|------|--------------|
+| **VS Code** | Latest | IDE principal | Léger, plugins C/TypeScript/Git |
+| **Git** | 2.x | Contrôle version | Collaboration, historique |
+| **GitHub** | Cloud | Dépôt hébergé | Collaboration équipe, CI/CD |
+| **ESLint** | 8.x (optionnel) | Linting JS | Qualité code (voir README) |
+
+#### E. Architecture & Infrastructure
+
+| Technologie | Rôle | Détails |
+|-------------|------|---------|
+| **Docker** (optionnel) | Containerisation | Reproductibilité environnement |
+| **Linux/WSL2** | OS cible | Ubuntu 20.04 sur WSL/VM |
+| **Port 3000** | Next.js dev server | http://localhost:3000 |
+| **Child Process Spawn** | Backend invocation | Node.js exécute `./ordonnanceur --api` |
+
+#### F. Dépendances Frontend Complètes (package.json)
+
+**Dependencies** (~50) :
+- React ecosystem : @radix-ui/* (40+ UI components)
+- Visualization : recharts (charts, gantt)
+- Notifications : sonner (toast)
+- Forms : react-hook-form, zod
+- Utilities : clsx, tailwind-merge
+- Other : lucide-react (icons), date-fns, etc.
+
+**DevDependencies** :
+- @tailwindcss/postcss, tailwindcss (CSS framework)
+- TypeScript types (@types/node, @types/react, @types/react-dom)
+
+#### G. Interaction Frontend ↔ Backend
+
+| Composant | Technologie | Communication |
+|-----------|-------------|---------------|
+| **Frontend (React)** | Next.js + TypeScript | HTTP POST requests |
+| **API Route (Node.js)** | `app/api/*/route.ts` | child_process.spawn() |
+| **Backend Binary (C)** | ./ordonnanceur --api | stdout JSON |
+| **Response** | JSON over HTTP | JSON.parse() → React render |
+
+---
+
+### Tableau Récapitulatif - Stack par Couche
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ FRONTEND (Web Browser)                                      │
+│ Next.js 16 + React 19 + TypeScript + Tailwind + Radix UI  │
+│ ├─ UI : components/algorithm-selector, results-display    │
+│ ├─ Visualization : recharts (Gantt, Pie, Bar charts)      │
+│ └─ HTTP Client : fetch → POST /api/schedule               │
+└─────────────────────────────────────────────────────────────┘
+                           ↓ HTTP (JSON)
+┌─────────────────────────────────────────────────────────────┐
+│ API ROUTES (Node.js Runtime)                                │
+│ app/api/schedule/route.ts + parse-config/route.ts          │
+│ ├─ Middleware : request validation, temp file creation     │
+│ ├─ Process spawn : ./ordonnanceur --api --config ... --algo │
+│ └─ Response : JSON parsing + cleanup                       │
+└─────────────────────────────────────────────────────────────┘
+                           ↓ child_process.spawn()
+┌─────────────────────────────────────────────────────────────┐
+│ BACKEND (C Binary)                                          │
+│ ./ordonnanceur (GCC compiled, C11 standard)                 │
+│ ├─ Parser : parse_config_file() → struct process[]        │
+│ ├─ Scheduler : simulation engines (6 algorithms)           │
+│ └─ Output : JSON to stdout (ganttData, processStats, etc.) │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Versions Exactes du Projet
+
+**Frontend Stack** :
+```json
+{
+  "next": "16.0.3",
+  "react": "19.2.0",
+  "typescript": "^5",
+  "tailwindcss": "^4.1.9",
+  "recharts": "latest",
+  "pnpm": "10.24.0",
+  "node": "20.19.6"
+}
+```
+
+**Backend Stack** :
+```bash
+C Compiler : gcc 9.4.0
+Build Tool : make 4.2.1
+C Standard : C11
+Target OS  : Linux (any POSIX-compliant)
+```
+
+**Development Environment** :
+```
+OS       : Ubuntu 20.04 LTS (or WSL2)
+IDE      : VS Code
+VCS      : Git 2.x + GitHub
+Runtime  : Node.js 20.19.6 (frontend)
+          C runtime (backend)
+```
 
 
 ### 4.2 Architecture du Projet
