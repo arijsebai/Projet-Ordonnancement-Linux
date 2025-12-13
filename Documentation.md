@@ -109,75 +109,86 @@ Ce projet est un **simulateur d'ordonnancement de processus sous Linux** avec un
 - ✅ **Métriques complètes** : temps d'attente, temps total, finish time, makespan, CPU utilization
 - ✅ **Architecture modulaire** : ajout nouvel algorithme = 1 fichier dans `policies/`, sans modifier scheduler.c
 
-**Technologies** : Next.js 16, React 19, TypeScript, Tailwind CSS, Radix UI, Recharts (frontend) + C11/GCC, Make (backend)
 
-**Dépôt Git** : [github.com/arijsebai/Projet-Ordonnancement-Linux](https://github.com/arijsebai/Projet-Ordonnancement-Linux) (branch: `dev`)
+### 1.1 Galerie UI — Captures d'Écran de l'Application Web
 
-### 1.1 Captures d'Écran de l'Application Web
-
-> **📸 Galerie d'Images** : Les captures ci-dessous illustrent l'interface utilisateur complète de l'application.
+> **📸 Galerie d'Images** : Les captures ci-dessous illustrent l'interface utilisateur complète de l'application en production.
 >
-> Pour visualiser ces images, placez les fichiers PNG correspondants dans le dossier `public/screenshots/` à la racine du projet.
+> **Localisation** : Les fichiers PNG sont stockés dans le dossier `public/` à la racine du projet.
 
-#### Interface Principale
+#### 1. Interface Principale
 
-![Page d'accueil](./public/screenshots/app-home.png)
+![Page d'accueil affichant le sélecteur d'algorithmes et les contrôles principaux](./public/home.png)
 
 **Figure 1.1** — *Page d'accueil de l'application*
-- Sélecteur d'algorithmes (dropdown avec 6 options)
-- Paramètres dynamiques : quantum (Round-Robin, Multilevel), ordre de priorité (ascendant/descendant)
-- Boutons : Générer Config, Upload Fichier, Lancer Simulation
+- Sélecteur d'algorithmes (dropdown avec 6 options : FIFO, RR, Priority, SRT, Multilevel, Multilevel Dynamic)
+- Paramètres dynamiques : quantum (Round-Robin, Multilevel Dynamic), ordre de priorité (ascendant/descendant)
+- Boutons d'action : Générer Config, Upload Fichier, Lancer Simulation
 - Liste des processus chargés avec détails (ID, Arrival, Execution, Priority)
 
 ---
 
-#### Visualisations des Résultats
+#### 2. Visualisations des Résultats
 
-![Diagramme de Gantt](./public/screenshots/app-gantt.png)
+![Diagramme de Gantt interactif affichant la timeline d'exécution des processus](./public/gantt.png)
 
 **Figure 1.2** — *Diagramme de Gantt interactif*
-- Timeline horizontale avec processus colorés par ID
+- Timeline horizontale avec processus colorés par ID (palette 20 couleurs)
 - Contrôles de lecture : Play/Pause, Step Forward, Step Backward, Reset
 - Zoom et navigation temporelle
 - Légende automatique avec correspondance couleur-processus
+- États visuels : Running (rempli), Waiting (hachuré), Completed (grisé)
 
 ---
 
-![Graphiques statistiques](./public/screenshots/app-charts.png)
+![Graphique circulaire montrant la répartition du temps CPU entre les processus](./public/cercle.png)
 
-**Figure 1.3** — *Graphiques de distribution (Pie Chart & Bar Chart)*
-- **Pie Chart** : Répartition du temps CPU par processus (pourcentages)
-- **Bar Chart** : Comparaison temps d'attente vs temps total par processus
-- Données synchronisées avec le diagramme de Gantt
+**Figure 1.3a** — *Diagramme circulaire (Pie Chart)*
+- Répartition du temps CPU par processus (pourcentages)
+- Couleurs synchronisées avec le diagramme de Gantt
+- Tooltip au survol avec temps exact
 
 ---
 
-![Tableau détaillé](./public/screenshots/app-table.png)
+![Graphique à barres comparant les temps d'attente et temps total pour chaque processus](./public/bar.png)
+
+**Figure 1.3b** — *Graphique à barres (Bar Chart)*
+- Comparaison temps d'attente (waiting) vs temps total (turnaround) par processus
+- Axes : X = Process ID, Y = Time units
+- Deux séries de barres colorées (waiting vs total)
+
+---
+
+![Tableau détaillé des statistiques d'exécution pour tous les processus](./public/tableau.png)
 
 **Figure 1.4** — *Tableau récapitulatif des statistiques*
-- Colonnes : Process ID, Arrival Time, Execution Time, Finish Time, Wait Time, Priority
+- Colonnes : Process ID, Arrival Time, Execution Time, Wait Time, Finish Time, Priority, Turnaround
 - Métriques globales : Average Wait Time, Makespan, CPU Utilization
-- Export possible (CSV via copy/paste)
+- Tri par colonnes (cliquable)
+- Export possible (copy/paste vers Excel)
 
 ---
 
-#### Fonctionnalités Avancées
+#### 3. Fonctionnalités Avancées
 
-![Génération de configuration](./public/screenshots/app-generate-dialog.png)
+![Dialog de génération automatique de fichier de configuration](./public/gen-fichier.png)
 
 **Figure 1.5** — *Dialog de génération automatique de configuration*
 - Paramètres : Nombre de processus (1-50)
-- Plages configurables : Arrival Time, Execution Time, Priority
-- Génération aléatoire avec prévisualisation
+- Plages configurables : Arrival Time (min/max), Execution Time (min/max), Priority (min/max)
+- Génération aléatoire avec prévisualisation du fichier `.txt`
+- Bouton téléchargement direct
 
 ---
 
-![Gestion des erreurs](./public/screenshots/app-error-toast.png)
+![Interface d'upload avec drag & drop et validation de fichier de configuration](./public/fichier.png)
 
-**Figure 1.6** — *Toast de notification d'erreur*
-- Erreur : Binaire backend introuvable (`ordonnanceur` non compilé)
-- Message clair avec action suggérée ("Exécutez `make` pour le générer")
-- Auto-dismiss après 5 secondes
+**Figure 1.6** — *Zone d'upload et validation de fichier*
+- Drag & drop ou sélection fichier `.txt`
+- Validation en temps réel de la syntaxe
+- Aperçu des processus parsés en tableau
+- Messages d'erreur détaillés si format invalide
+- Bouton confirmation pour charger la configuration
 
 ---
 
@@ -932,121 +943,164 @@ Runtime  : Node.js 20.19.6 (frontend)
 ```
 
 
-### 4.2 Architecture du Projet
+### 4.2 Architecture du Dépôt Git
 
 **Architecture Hybride : Next.js (Frontend) + C (Backend)**
 
 ```
-Projet-Ordonnancement-Linux/
+Projet-Ordonnancement-Linux/  [github.com/arijsebai/Projet-Ordonnancement-Linux]
 │
-├─── FRONTEND (Next.js 16 + React 19 + TypeScript)
+├─── 🎨 FRONTEND (Next.js 16 + React 19 + TypeScript)
 │    │
-│    ├── app/                           # Next.js App Router
-│    │   ├── page.tsx                   # Page principale UI (upload/generate config, select algo, launch)
-│    │   ├── layout.tsx                 # Layout racine (metadata, ThemeProvider)
-│    │   ├── globals.css                # Styles Tailwind globaux
-│    │   └── api/                       # API Routes Next.js (Node.js runtime)
-│    │       ├── schedule/
-│    │       │   └── route.ts           # POST /api/schedule → lance ordonnanceur --api
-│    │       └── parse-config/
-│    │           └── route.ts           # POST /api/parse-config → parse fichier config
+│    ├── app/                                    # Next.js App Router (React 19)
+│    │   ├── page.tsx                           # Page principale UI
+│    │   │   └─ AlgorithmSelector + FileGeneration + ResultsDisplay
+│    │   ├── layout.tsx                         # Layout racine (ThemeProvider, metadata)
+│    │   ├── globals.css                        # Styles Tailwind globaux
+│    │   └── api/                               # API Routes Next.js (Node.js runtime)
+│    │       ├── schedule/route.ts              # POST /api/schedule → C backend
+│    │       └── parse-config/route.ts          # POST /api/parse-config → validation
 │    │
-│    ├── components/                    # React Components
-│    │   ├── algorithm-selector.tsx     # Dropdown algorithmes + params (quantum, priorityOrder)
-│    │   ├── file-generation-dialog.tsx # Dialog génération config (nb processus, ranges)
-│    │   ├── results-display.tsx        # Gantt interactif + Pie/Bar charts + Table stats
-│    │   ├── theme-provider.tsx         # Dark/Light theme (next-themes)
-│    │   └── ui/                        # Radix UI primitives (button, card, dialog, tabs, etc.)
+│    ├── components/                            # React Components (TSX)
+│    │   ├── algorithm-selector.tsx             # Dropdown algorithmes + paramètres
+│    │   ├── file-generation-dialog.tsx         # Dialog génération config
+│    │   ├── results-display.tsx                # Gantt + Charts + Table stats
+│    │   ├── theme-provider.tsx                 # Dark/Light mode (next-themes)
+│    │   └── ui/                                # Radix UI primitives (46 composants)
+│    │       ├── button.tsx, card.tsx, dialog.tsx, tabs.tsx, table.tsx
+│    │       ├── accordion.tsx, alert.tsx, avatar.tsx, badge.tsx
+│    │       └── ... [43 autres composants UI shadcn/ui]
 │    │
-│    ├── lib/                           # Utilitaires TypeScript
-│    │   ├── types.ts                   # Interfaces (Process, AlgorithmConfig, SchedulingResult, etc.)
-│    │   └── utils.ts                   # Helpers (cn pour classnames)
+│    ├── lib/                                   # Utilitaires TypeScript
+│    │   ├── types.ts                           # Interfaces/Types (Process, Result, Config, etc.)
+│    │   └── utils.ts                           # Helpers classnames (cn)
 │    │
-│    ├── hooks/                         # Hooks React personnalisés
-│    │   ├── use-toast.ts               # Toast notifications (sonner)
-│    │   └── use-mobile.ts              # Responsive breakpoint detection
+│    ├── hooks/                                 # Hooks React personnalisés
+│    │   ├── use-toast.ts                       # Toast notifications (sonner)
+│    │   └── use-mobile.ts                      # Responsive breakpoint detection
 │    │
-│    ├── public/                        # Assets statiques (images, fonts, etc.)
+│    ├── public/                                # Assets statiques
+│    │   ├── icon.svg, placeholder.svg          # Icons (svg, png)
+│    │   ├── apple-icon.png, icon-*             # Favicons (Next.js)
+│    │   ├── home.png, gantt.png, cercle.png    # Screenshots UI (documentation)
+│    │   ├── bar.png, tableau.png, fichier.png  # Charts screenshots
+│    │   ├── gen-fichier.png                    # Dialog generation screenshot
+│    │   └── processus.png                      # Process visualization
 │    │
-│    ├── next.config.mjs                # Config Next.js (typescript, images)
-│    ├── tsconfig.json                  # Config TypeScript
-│    ├── postcss.config.mjs             # PostCSS + Tailwind
-│    ├── components.json                # Shadcn UI config
-│    ├── package.json                   # Deps (next, react, recharts, radix-ui, etc.) + scripts
-│    ├── pnpm-lock.yaml                 # Lock file pnpm
-│    └── node_modules/                  # Dependencies installées
+│    ├── next.config.mjs                        # Config Next.js
+│    ├── tsconfig.json                          # Config TypeScript (strict mode)
+│    ├── postcss.config.mjs                     # PostCSS + Tailwind CSS
+│    ├── components.json                        # Shadcn UI aliases config
+│    ├── package.json                           # Dependencies + scripts (build, dev, start)
+│    ├── pnpm-lock.yaml                         # Lock file pnpm (v9.16.0)
+│    ├── .next/                                 # Cache Next.js (gitignored)
+│    ├── .vscode/                               # Settings VS Code (extensions, keybindings)
+│    └── node_modules/                          # Dependencies installées (gitignored)
 │
-├─── BACKEND C (Moteur simulation)
+├─── 🔧 BACKEND C (Moteur simulation)
 │    │
-│    ├── src/                           # Code source C
-│    │   ├── main.c                     # Point d'entrée (modes: interactif, --api, --parse-config)
-│    │   ├── scheduler.c                # Moteur simulation + simulations (fifo_simulation, etc.)
-│    │   ├── parser.c                   # Parse fichiers config (parse_config_file)
-│    │   ├── generate_config.c          # Génère configs aléatoires (generate_config)
-│    │   └── utils.c                    # Utilitaires (display_config_file, etc.)
+│    ├── src/                                   # Code source C (Standard C11)
+│    │   ├── main.c                             # Point d'entrée (modes: interactif, --api)
+│    │   ├── scheduler.c                        # Moteur simulation + 6 algorithmes
+│    │   ├── parser.c                           # Parse fichiers config (.txt)
+│    │   ├── generate_config.c                  # Génération configs aléatoires
+│    │   └── utils.c                            # Utilitaires affichage
 │    │
-│    ├── include/                       # Headers C
-│    │   ├── process.h                  # struct process, NAME_LEN, READY/RUNNING/BLOCKED/ZOMBIE
-│    │   ├── scheduler.h                # Prototypes simulations, struct simulation_result
-│    │   ├── parser.h                   # parse_config_file, validate_config
-│    │   ├── generate_config.h          # generate_config
-│    │   └── utils.h                    # display_config_file, etc.
+│    ├── include/                               # Headers C
+│    │   ├── process.h                          # struct process, états (READY/RUNNING/BLOCKED)
+│    │   ├── scheduler.h                        # Prototypes simulations, résultats
+│    │   ├── parser.h                           # parse_config_file, validate_config
+│    │   ├── generate_config.h                  # generate_config (int n, ...)
+│    │   └── utils.h                            # Fonctions utilitaires display
 │    │
-│    ├── policies/                      # Algorithmes ordonnancement (fonctions sélection)
-│    │   ├── fifo.c                     # int fifo_scheduler(process*, int, int, int, int)
-│    │   ├── priority_preemptive.c      # int priority_preemptive(...)
-│    │   ├── roundrobin.c               # void round_robin(process*, int, int)
-│    │   ├── srt.c                      # void srt_simulation(process*, int)
-│    │   ├── multilevel.c               # int select_multilevel(...)
-│    │   └── multilevel_dynamic.c       # int select_multilevel_dynamic(...)
+│    ├── policies/                              # 6 Algorithmes ordonnancement (sources .c)
+│    │   ├── fifo.c                             # First-In First-Out
+│    │   ├── priority_preemptive.c              # Priority préemptive
+│    │   ├── roundrobin.c                       # Round Robin avec quantum
+│    │   ├── srt.c                              # Shortest Remaining Time First
+│    │   ├── multilevel.c                       # Multilevel Queue (statique)
+│    │   └── multilevel_dynamic.c               # Multilevel Feedback Queue (dynamique + aging)
 │    │
-│    ├── tests/                         # Tests unitaires C
-│    │   ├── test_fifo.c
-│    │   ├── test_priority.c
-│    │   ├── test_roundrobin.c
-│    │   ├── test_multilevel.c
-│    │   ├── test_multilevel_dynamic.c
-│    │   ├── test_parser.c
-│    │   └── testfile.txt
+│    ├── tests/                                 # Tests unitaires C
+│    │   ├── test_fifo.c, test_priority.c       # Tests algorithmes
+│    │   ├── test_roundrobin.c, test_multilevel.c
+│    │   ├── test_multilevel_dynamic.c, test_parser.c
+│    │   └── testfile.txt                       # Données test
 │    │
-│    ├── build/                         # Fichiers objets .o (généré par make)
+│    ├── build/                                 # Fichiers objets .o (généré par Makefile)
 │    │
-│    ├── ordonnanceur                   # Binaire Linux compilé
-│    ├── ordonnanceur.exe               # Binaire Windows cross-compilé
-│    ├── Makefile                       # Build system (all, clean, mrproper)
-│    └── tests/*.c                      # Sources de tests unitaires (binaires test_* non trackés)
+│    ├── ordonnanceur                           # Binaire Linux compilé (ELF x86_64)
+│    ├── ordonnanceur.exe                       # Binaire Windows cross-compilé
+│    ├── Makefile                               # Build system (all, clean, mrproper, tests)
+│    │   └─ Compile avec GCC 11+ (std=c11, Wall, Wextra, O2)
+│    │
+│    └── (test_* binaries)                      # Binaires tests (NON trackés via .gitignore)
 │
-├─── CONFIGURATION & DONNÉES
+├─── 📋 CONFIGURATION & DONNÉES
 │    │
-│    └── config/                        # Fichiers configuration processus
-│        ├── sample_config.txt          # Exemple par défaut (7 processus)
-│        ├── config_*.txt               # Configs générées (timestamp)
-│        └── sample_config_*.txt        # Configs générées par web UI
+│    └── config/                                # Fichiers configuration processus (.txt)
+│        ├── sample_config.txt                  # Exemple par défaut (7 processus)
+│        ├── config_YYYYMMDD_HHMMSS.txt         # Configs générées (timestamp)
+│        └── sample_config_YYYYMMDD_HHMMSS.txt  # Configs générées par UI
 │
-├─── DOCUMENTATION
+├─── 📚 DOCUMENTATION
 │    │
-│    ├── Documentation.md               # Documentation technique complète (ce fichier)
-│    ├── README.md                      # Guide utilisateur + install + usage
-│    ├── API_REFERENCE.md               # Référence API Next.js
-│    ├── ARCHITECTURE.md                # Architecture détaillée
-│    ├── PROFESSIONAL_README.md         # README professionnel
-│    ├── PROJECT_SUMMARY.txt            # Résumé projet
-│    ├── INDEX.md                       # Index navigation docs
-│    └── LICENSE                        # MIT License
+│    ├── Documentation.md                       # Documentation technique COMPLÈTE (1928 lignes)
+│    ├── README.md                              # Guide utilisateur + Installation + Usage
+│    ├── PROFESSIONAL_README.md                 # README format professionnel (recruteurs)
+│    ├── API_REFERENCE.md                       # Référence API Next.js routes
+│    ├── ARCHITECTURE.md                        # Détails architecture système
+│    ├── INDEX.md                               # Index navigation docs
+│    ├── PROJECT_SUMMARY.txt                    # Résumé complet projet
+│    ├── UPDATES_MAKEFILE_FRONTEND.md           # Historique mises à jour
+│    ├── Documentation.pdf                      # Version PDF (auto-générée)
+│    └── LICENSE                                # MIT License
 │
-└─── CONFIGURATION RACINE
+├─── ⚙️ CONFIGURATION RACINE
+│    │
+│    ├── .git/                                  # Dépôt Git local
+│    ├── .gitignore                             # Fichiers ignorés (node_modules, build/, .next/, *.o, test_*)
+│    ├── package.json                           # Dependencies Node.js (my-v0-project v0.1.0)
+│    ├── pnpm-lock.yaml                         # Lock file pnpm
+│    ├── tsconfig.json                          # Config TypeScript (strict: true)
+│    ├── next.config.mjs                        # Config Next.js (typescript, images)
+│    ├── postcss.config.mjs                     # PostCSS config (Tailwind)
+│    ├── components.json                        # Shadcn UI config (aliases)
+│    ├── Makefile                               # Build system C
+│    ├── next-env.d.ts                          # Auto-généré Next.js types
+│    ├── .vscode/                               # VS Code settings (extensions, keybindings)
+│    └── .next/                                 # Cache Next.js dev/prod (gitignored)
+│
+└─── 📦 DÉPÔT GITHUB
      │
-     ├── .git/                          # Dépôt Git local
-     ├── .gitignore                     # Ignore (node_modules, build, .next, etc.)
-     ├── .next/                         # Cache Next.js (dev/production)
-     ├── .vscode/                       # Settings VS Code
-    └── (aucun binaire de test tracké)                 # Les binaires test_* sont ignorés par .gitignore
+     ├── **URL** : https://github.com/arijsebai/Projet-Ordonnancement-Linux
+     ├── **Branch actif** : `dev` (branche principale de développement)
+     ├── **Remote** : `origin` (github.com/arijsebai/...)
+     ├── **Licence** : MIT (fichier LICENSE)
+     │
+     └── **Fichiers ignorés (.gitignore)** :
+         ├── Fichiers objets C : *.o, *.obj, *.elf
+         ├── Binaires tests : test_*
+         ├── Dossiers Node.js : node_modules/, .next/
+         ├── Dossiers build : build/
+         ├── Fichiers temporaires : *.tmp, *.log
+         ├── Exécutables : *.exe, *.out, *.app
+         └── Caches : *.pdb, *.dSYM/
 ```
 
-**Dépôt GitHub** :
-- URL : `https://github.com/arijsebai/Projet-Ordonnancement-Linux.git`
- - Branch active : `dev`
-- Remote : `origin`
+**Métadonnées Dépôt Git** :
+
+| Propriété | Valeur |
+|-----------|--------|
+| **Repository** | `Projet-Ordonnancement-Linux` |
+| **Owner** | `arijsebai` (Arij Sebai) |
+| **URL Git** | `https://github.com/arijsebai/Projet-Ordonnancement-Linux.git` |
+| **Branch actif** | `dev` |
+| **Remote** | `origin` → `github.com/arijsebai/Projet-Ordonnancement-Linux.git` |
+| **Licence** | MIT (voir fichier `LICENSE`) |
+| **Package Name** | `my-v0-project` (v0.1.0) |
+| **Commandes Build** | `pnpm build` (Next.js), `make` (C backend) |
+| **Commandes Dev** | `pnpm dev` (frontend), `./ordonnanceur` (backend) |
 
 **Structure Logique par Rôle**
 
@@ -1084,65 +1138,6 @@ Projet-Ordonnancement-Linux/
         │  API Route            │
         │  Parse JSON + Return  │
         └──────────┬────────────┘
-- **Makespan** : Temps total de simulation (du premier arrivé au dernier terminé)
-
-![Tableau Statistiques](./public/screenshots/tableau.png)
-*Figure 5 : Tableau détaillé des statistiques de simulation*
-
----
-
-#### **6. Dialog de Génération de Configuration**
-
-**Fichier** : `public/screenshots/generation-dialog.png`
-
-**Description** :
-- Formulaire de génération automatique de processus
-- Paramètres configurables :
-  - **Nombre de processus** : 1-50 (slider)
-  - **Arrival Time range** : Min-Max (0-100)
-  - **Execution Time range** : Min-Max (1-50)
-  - **Priority range** : Min-Max (1-10)
-- Boutons : Générer, Annuler
-- Génère un fichier config.txt téléchargeable
-
-![Dialog Génération](./public/screenshots/generation-dialog.png)
-*Figure 6 : Interface de génération automatique de configurations*
-
----
-
-#### **7. Upload de Fichier Configuration**
-
-**Fichier** : `public/screenshots/upload.png`
-
-**Description** :
-- Zone de drag & drop pour fichiers `.txt`
-- Format attendu : `ProcessID ArrivalTime ExecutionTime Priority` (1 ligne par processus)
-- Validation en temps réel avec messages d'erreur explicites
-- Prévisualisation du fichier parsé avant simulation
-
-![Upload Fichier](./public/screenshots/upload.png)
-*Figure 7 : Interface d'upload et validation de fichier configuration*
-
----
-
-**Instructions pour ajouter les captures** :
-
-1. Créer le dossier `public/screenshots/` s'il n'existe pas :
-   ```bash
-   mkdir -p public/screenshots
-   ```
-
-2. Prendre les captures d'écran de l'application en fonctionnement :
-   - Lancer l'app : `pnpm dev`
-   - Ouvrir `http://localhost:3000`
-   - Utiliser un outil de capture (Flameshot, Snipping Tool, Cmd+Shift+4 sur Mac)
-   - Format recommandé : PNG (1920x1080 ou 1440x900)
-
-3. Renommer et placer les fichiers selon les noms ci-dessus
-
-4. Les images seront automatiquement affichées dans la documentation
-
----
                    │
         ┌──────────▼────────────────┐
         │  React Component         │
@@ -1209,31 +1204,11 @@ React Component (ResultsDisplay)
 
 3. **FileGenerationDialog** (`components/file-generation-dialog.tsx`)
    - Dialog création config (nb processus, ranges arrival/exec/priority)
+   - Prévisualisation avant téléchargement
+   - Génération aléatoire avec paramètres
 
-#### Captures d'écran (placeholders)
+> ⚠️ **Note** : Les captures d'écran de l'interface utilisateur sont documentées dans la **section 1.1** (Galerie UI) avec les vrais fichiers d'écran actuels.
 
-Placez les fichiers suivants dans `public/` et ils seront référencés dans la documentation et le README :
-- `public/home.png` — Page d'accueil avec AlgorithmSelector et FileGenerationDialog
-- `public/gantt.png` — Vue Résultats avec diagramme de Gantt
-- `public/processus.png` — Vue Résultats avec diagramme d'état des processus
-- `public/tableau.png` — Vue Résultats avec tableau
-- `public/bar.png` — Vue Résultats avec Bar charts
-- `public/cercle.png` — Vue Résultats avec Pie charts
-
-
-Aperçu intégré :
-
-![Accueil](./public/home.png)
-
-![Gantt](./public/gantt.png)
-
-![Processus](./public/processus.png)
-
-![Tableau](./public/tableau.png)
-
-![Charts](./public/bar.png)
-
-![Pie](./public/cercle.png)
 
 ### 4.6 Mapping Algorithmes Frontend → Backend
 
