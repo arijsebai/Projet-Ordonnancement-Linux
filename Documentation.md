@@ -1050,8 +1050,9 @@ Projet-Ordonnancement-Linux/
 │    └── .git/                                 # Dépôt Git local
 │
 └─── 📚 DOCUMENTATION
-     ├── Documentation.md                      # Documentation technique (1885 lignes)
+     ├── Documentation.md                      # Documentation technique (1857 lignes)
      ├── Documentation.pdf                     # Version PDF auto-générée
+     ├── ANALYSE_LICENCES.pdf                  # Analyse des licences du projet
      ├── README.md                             # Guide utilisateur
      ├── LICENSE                               # MIT License
      └── .vscode/                              # VS Code settings
