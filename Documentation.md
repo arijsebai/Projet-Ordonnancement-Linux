@@ -1002,43 +1002,48 @@ Projet-Ordonnancement-Linux/
 │  UTILISATEUR (Browser)                          │
 │  http://localhost:3000                          │
 └──────────────────┬──────────────────────────────┘
-                   │
-        ┌──────────▼────────────┐
-        │  FRONTEND (React)     │
-        │  ├─ page.tsx          │
-        │  ├─ AlgorithmSelector │
-        │  ├─ FileGeneration    │
-        │  └─ ResultsDisplay    │
-        └──────────┬────────────┘
-                   │ POST /api/schedule
-        ┌──────────▼────────────────────┐
-        │  API Route (Node.js)          │
-        │  /api/schedule/route.ts       │
-        │  ├─ mapAlgorithm()            │
-        │  ├─ spawn("./ordonnanceur", [--api, --config <tmp>, --algo <name>, --quantum <q>, --prio-order <asc|desc>]) │
-        │  └─ parse JSON stdout         │
-        └──────────┬────────────────────┘
-                   │
-        ┌──────────▼────────────────┐
-        │  BACKEND (C Binary)       │
-        │  ./ordonnanceur --api     │
-        │  ├─ parser.c (parse)      │
-        │  ├─ scheduler.c (simu)    │
-        │  └─ JSON stdout output    │
-        └──────────┬────────────────┘
-                   │
-        ┌──────────▼────────────┐
-        │  API Route            │
-        │  Parse JSON + Return  │
-        └──────────┬────────────┘
-                   │
-        ┌──────────▼────────────────┐
-        │  React Component         │
-        │  ResultsDisplay          │
-        │  ├─ Gantt chart          │
-        │  ├─ Pie/Bar charts       │
-        │  └─ Detailed table       │
-        └──────────────────────────┘
+       │ Sélection / Upload / Génération
+  ┌──────────▼────────────┐
+  │  FRONTEND (React)     │
+  │  page.tsx             │
+  │  ├─ AlgorithmSelector │
+  │  ├─ FileGeneration    │
+  │  └─ ResultsDisplay    │
+  └──────────┬────────────┘
+       │ POST /api/parse-config (upload .txt)
+       │ POST /api/schedule (simulation)
+  ┌──────────▼────────────────────┐
+  │  API Routes (Node.js)         │
+  │  parse-config/route.ts        │
+  │    └─ parse fichier → JSON    │
+  │  schedule/route.ts            │
+  │    ├─ mapAlgorithm()
+  │    ├─ write temp config.txt
+  │    ├─ spawn("./ordonnanceur --api ...")
+  │    ├─ parse JSON stdout
+  │    └─ cleanup temp file
+  └──────────┬────────────────────┘
+       │ stdout JSON
+  ┌──────────▼────────────────┐
+  │  BACKEND (C Binary)       │
+  │  ./ordonnanceur --api     │
+  │  ├─ parser.c (parse)      │
+  │  ├─ scheduler.c (simu)    │
+  │  └─ JSON stdout output    │
+  └──────────┬────────────────┘
+       │ JSON results
+  ┌──────────▼────────────────┐
+  │  API Routes               │
+  │  Retourne JSON → React    │
+  └──────────┬────────────────┘
+       │ setState(results)
+  ┌──────────▼────────────────┐
+  │  React UI                 │
+  │  ResultsDisplay           │
+  │  ├─ Gantt chart           │
+  │  ├─ Pie/Bar charts        │
+  │  └─ Detailed table        │
+  └──────────────────────────┘
 ```
 
 ### 4.3 Backend C : Modes d'Opération
