@@ -25,40 +25,60 @@ A complete simulator of process scheduling algorithms with a modern web UI (Next
 - API default: **ascending** (smaller number = higher) because `/api/schedule` sends `--prio-order asc`.
 - Force mode: `--prio-order asc|desc`.
 
-## Prerequisites
+### Prerequisites
 
-| OS | Requirements |
-|----|--------------|
-| Linux (Ubuntu/Debian/WSL) | Node.js ≥18, pnpm, GCC, Make, build-essential |
-| macOS | Node.js ≥18, pnpm, Xcode CLT (or `gcc`), Make |
-| Windows | WSL2 + Ubuntu recommended; then same as Linux |
+#### Linux (Debian/Ubuntu)
 
-### Install commands (if missing)
-
-#### Ubuntu / Debian / WSL
 ```bash
-sudo apt update
-sudo apt install -y build-essential gcc make curl
-# Install Node.js 18 LTS via Nodesource
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
-# Enable pnpm via corepack (recommended)
-corepack enable
-corepack prepare pnpm@latest --activate
-# If corepack unavailable, fallback:
-# sudo npm install -g pnpm
+# Update package manager
+sudo apt update && sudo apt upgrade -y
+
+# Install build tools
+sudo apt install -y \
+  build-essential \
+  gcc \
+  make \
+  git
+
+# Install Node.js 18+ and pnpm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+source ~/.bashrc
+nvm install 18
+npm install -g pnpm@8
 ```
 
-#### macOS (Homebrew)
+#### macOS
+
 ```bash
-brew install node pnpm gcc make
-# Ensure corepack is enabled (shipped with Node 18+)
-corepack enable
+# Install Xcode Command Line Tools
+xcode-select --install
+
+# Install Homebrew (if not installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install dependencies
+brew install node@18 make git
+
+# Install pnpm
+npm install -g pnpm@8
 ```
 
-#### Windows (WSL2 Ubuntu)
-1) Enable WSL2 and install Ubuntu from Microsoft Store.  
-2) Inside Ubuntu, run the same commands as the Ubuntu section above.
+#### Windows (WSL2)
+
+```bash
+# Open PowerShell as Administrator and run:
+wsl --install -d Ubuntu-22.04
+
+# Then in WSL terminal:
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y build-essential gcc make git curl
+
+# Install Node.js
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+source ~/.bashrc
+nvm install 18
+npm install -g pnpm@8
+```
 
 ## Project setup
 
