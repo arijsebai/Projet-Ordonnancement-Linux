@@ -63,7 +63,8 @@ corepack enable
 ## Project setup
 
 ```bash
-
+# Clone the repository
+git clone https://github.com/arijsebai/Projet-Ordonnancement-Linux.git
 cd Projet-Ordonnancement-Linux
 ```
 
@@ -158,7 +159,6 @@ gcc -Iinclude tests/test_multilevel_dynamic.c policies/multilevel_dynamic.c -o t
 
 ### Web checks
 ```bash
-pnpm lint
 pnpm build
 pnpm start   # serve production build
 ```
