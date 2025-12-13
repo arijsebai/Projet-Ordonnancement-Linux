@@ -44,9 +44,9 @@
 
 </div>
 
-### **1. Introduction** ................................................... [Page 4](#1-introduction)
+### **1. Introduction** ................................................... [Page 5](#1-introduction)
 
-### **2. Choix des Structures de Données** ......................... [Page 4](#2-choix-des-structures-de-données)
+### **2. Choix des Structures de Données** ......................... [Page 5](#2-choix-des-structures-de-données)
    - 2.1 Structure `process` : Le Cœur du Système
    - 2.2 Représentation des Données : Tableau Dynamique
    - 2.3 Représentation Implicite de la Ready Queue
@@ -59,14 +59,14 @@
    - 3.5 Multilevel Queue (Statique)
    - 3.6 Multilevel Feedback Queue (Dynamique)
 
-### **4. Technologies et Architecture** ........................... [Page 17](#4-technologies-et-architecture)
+### **4. Technologies et Architecture** ........................... [Page 19](#4-technologies-et-architecture)
    - 4.1 Choix des Technologies
    - 4.2 Architecture du Projet  
    - 4.3 Backend C : Mode Interactif vs Mode API
    - 4.4 Intégration complète : Frontend Next.js + Backend C
    - 4.5 Flow d'Exécution Complet
 
-### **5. Déroulement du Développement SCRUM** ................... [Page 19](#5-déroulement-du-développement-scrum)
+### **5. Déroulement du Développement SCRUM** ................... [Page 30](#5-déroulement-du-développement-scrum)
    - 5.1 Organisation Équipe
    - 5.2 Paramètres Scrum
    - 5.3 Product Backlog
@@ -75,11 +75,11 @@
    - 5.6 Sprint Backlog 2
    - 5.7 Métriques SCRUM
 
-### **6. Spécifications Techniques** ................................ [Page 22](#6-spécifications-techniques)
+### **6. Spécifications Techniques** ................................ [Page 32](#6-spécifications-techniques)
    - 6.1 Point d'Entrée (main.c) : Modes Interactif et API
    - 6.2 Format Fichier Configuration
    - 6.3 Générateur Configuration Automatique
-### **7. Makefile et Compilation** .................................. [Page 27](#7-makefile-et-compilation)
+### **7. Makefile et Compilation** .................................. [Page 37](#7-makefile-et-compilation)
    - 7.1 Objectif du Makefile
    - 7.2 Variables Principales
    - 7.3 Règles Principales
@@ -88,7 +88,7 @@
    - 7.6 Principes et Avantages
    - 7.7 Utilisation Pratique
 
-### **8. Conclusion** ................................................. [Page 31](#8-conclusion)
+### **8. Conclusion** ................................................. [Page 41](#8-conclusion)
 
 
 <div style="page-break-after: always;"></div>
@@ -99,14 +99,14 @@
 
 | Figure | Description | Page |
 |--------|-------------|------|
-| **Figure 4.1** | Interface principale avec sélection d'algorithme et gestion des processus | [18](#451-interface-principale--sélection-et-configuration) |
-| **Figure 4.2** | Diagramme de Gantt avec contrôles interactifs et légende d'états | [18](#452-visualisation-gantt--timeline-dexécution-interactive) |
-| **Figure 4.3** | Suivi des états des processus au fil du temps | [19](#453-diagramme-détat-des-processus) |
-| **Figure 4.4** | Analyse de la répartition du temps CPU par processus | [19](#454-répartition-cpu--diagramme-circulaire) |
-| **Figure 4.5** | Comparaison graphique des métriques de performance | [19](#455-comparaison-statistiques--graphique-à-barres) |
-| **Figure 4.6** | Tableau statistiques avec toutes les métriques de performance | [20](#456-tableau-récapitulatif--données-détaillées) |
-| **Figure 4.7** | Interface de génération automatique de configurations | [20](#457-génération-automatique--configuration) |
-| **Figure 4.8** | Zone d'upload avec validation et aperçu des processus | [20](#458-upload-et-validation--fichier-configuration) |
+| **Figure 4.1** | Interface principale avec sélection d'algorithme et gestion des processus | [25](#451-interface-principale--sélection-et-configuration) |
+| **Figure 4.2** | Diagramme de Gantt avec contrôles interactifs et légende d'états | [26](#452-visualisation-gantt--timeline-dexécution-interactive) |
+| **Figure 4.3** | Suivi des états des processus au fil du temps | [26](#453-diagramme-détat-des-processus) |
+| **Figure 4.4** | Analyse de la répartition du temps CPU par processus | [27](#454-répartition-cpu--diagramme-circulaire) |
+| **Figure 4.5** | Comparaison graphique des métriques de performance | [27](#455-comparaison-statistiques--graphique-à-barres) |
+| **Figure 4.6** | Tableau statistiques avec toutes les métriques de performance | [28](#456-tableau-récapitulatif--données-détaillées) |
+| **Figure 4.7** | Interface de génération automatique de configurations | [29](#457-génération-automatique--configuration) |
+| **Figure 4.8** | Zone d'upload avec validation et aperçu des processus | [29](#458-upload-et-validation--fichier-configuration) |
 
 
 <div style="page-break-after: always;"></div>
