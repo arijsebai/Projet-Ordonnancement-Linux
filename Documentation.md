@@ -931,111 +931,57 @@ Runtime  : Node.js 20.19.6 (frontend)
 Projet-Ordonnancement-Linux/
 [github.com/arijsebai/Projet-Ordonnancement-Linux • branch: dev]
 
-├─── 🎨 FRONTEND (Next.js 16 + React 19 + TypeScript)
-│    ├── app/                                   # Next.js App Router
-│    │   ├── page.tsx                          # Page principale
-│    │   ├── layout.tsx                        # Layout racine
-│    │   ├── globals.css                       # Styles globaux
-│    │   └── api/
-│    │       ├── schedule/route.ts             # POST /api/schedule
-│    │       └── parse-config/route.ts         # POST /api/parse-config
-│    │
-│    ├── components/                           # React Components
-│    │   ├── algorithm-selector.tsx
-│    │   ├── file-generation-dialog.tsx
-│    │   ├── results-display.tsx
-│    │   ├── theme-provider.tsx
-│    │   └── ui/                               # Shadcn UI (46 composants)
-│    │
-│    ├── lib/                                  # Utilitaires TypeScript
-│    │   ├── types.ts                          # Interfaces/Types
-│    │   └── utils.ts                          # Helpers
-│    │
-│    ├── hooks/                                # Hooks React
-│    │   ├── use-toast.ts
-│    │   └── use-mobile.ts
-│    │
-│    ├── public/                               # Assets statiques
-│    │   ├── *.svg, *.png                      # Icons & favicons
-│    │   ├── home.png, gantt.png, cercle.png   # Screenshots
-│    │   ├── bar.png, tableau.png, fichier.png
-│    │   └── gen-fichier.png
-│    │
-│    ├── node_modules/                         # Dependencies (gitignored)
-│    ├── .next/                                # Cache Next.js (gitignored)
-│    ├── next.config.mjs                       # Config Next.js
-│    ├── tsconfig.json                         # Config TypeScript
-│    ├── postcss.config.mjs                    # PostCSS config
-│    ├── components.json                       # Shadcn UI config
-│    ├── next-env.d.ts                         # Auto-généré Next.js types
-│    └── .vscode/                              # VS Code settings
-│
-├─── 🔧 BACKEND C (Moteur simulation)
-│    ├── src/                                  # Code source C11
-│    │   ├── main.c                            # Point d'entrée
-│    │   ├── scheduler.c                       # Moteur simulation
-│    │   ├── parser.c                          # Parser config
-│    │   ├── generate_config.c                 # Générateur config
-│    │   └── utils.c                           # Utilitaires
-│    │
-│    ├── include/                              # Headers C
-│    │   ├── process.h
-│    │   ├── scheduler.h
-│    │   ├── parser.h
-│    │   ├── generate_config.h
-│    │   └── utils.h
-│    │
-│    ├── policies/                             # 6 Algorithmes
-│    │   ├── fifo.c
-│    │   ├── priority_preemptive.c
-│    │   ├── roundrobin.c
-│    │   ├── srt.c
-│    │   ├── multilevel.c
-│    │   └── multilevel_dynamic.c
-│    │
-│    ├── tests/                                # Tests unitaires C
-│    │   ├── test_fifo.c
-│    │   ├── test_priority.c
-│    │   ├── test_roundrobin.c
-│    │   ├── test_multilevel.c
-│    │   ├── test_multilevel_dynamic.c
-│    │   ├── test_parser.c
-│    │   └── testfile.txt
-│    │
-│    ├── Makefile                              # Build system C
-│    ├── ordonnanceur                          # Binaire Linux (49 KB)
-│    └── ordonnanceur.exe                      # Binaire Windows (504 KB)
-│
-├─── 📦 BUILD & COMPILATION
-│    ├── build/                                # Fichiers objets .o
-│    │   ├── *.o (11 fichiers)                 # fifo.o, scheduler.o, parser.o, etc.
-│    │   └── Générés par: make
-│    │
-│    └── (test_* binaries ignorés par .gitignore)
-│
-├─── ⚙️ CONFIGURATION & DONNÉES
-│    ├── config/                               # Fichiers configuration
-│    │   ├── sample_config.txt                 # Config exemple
-│    │   └── config_*.txt                      # Configs générées
-│    │
-│    ├── package.json                          # Dependencies Node.js
-│    ├── pnpm-lock.yaml                        # Lock file
-│    ├── tsconfig.json                         # Config TypeScript
-│    ├── next.config.mjs                       # Config Next.js
-│    ├── postcss.config.mjs                    # PostCSS config
-│    ├── components.json                       # Shadcn UI config
-│    ├── Makefile                              # Build C
-│    ├── .gitignore                            # Fichiers ignorés
-│    ├── next-env.d.ts                         # Types Next.js auto-générés
-│    └── .git/                                 # Dépôt Git local
-│
-└─── 📚 DOCUMENTATION
-     ├── Documentation.md                      # Documentation technique (1857 lignes)
-     ├── Documentation.pdf                     # Version PDF auto-générée
-     ├── ANALYSE_LICENCES.pdf                  # Analyse des licences du projet
-     ├── README.md                             # Guide utilisateur
-     ├── LICENSE                               # MIT License
-     └── .vscode/                              # VS Code settings
+├── 🎨 FRONTEND (Next.js 16 / React 19 / TS)
+│   ├── app/                        # App Router (pages + API routes)
+│   │   ├── page.tsx               # Page principale
+│   │   ├── layout.tsx             # Layout racine
+│   │   ├── globals.css            # Styles globaux
+│   │   └── api/
+│   │       ├── schedule/route.ts  # POST /api/schedule
+│   │       └── parse-config/route.ts
+│   ├── components/                # UI métier + shadcn/ui
+│   │   ├── algorithm-selector.tsx
+│   │   ├── file-generation-dialog.tsx
+│   │   ├── results-display.tsx
+│   │   └── ui/                    # 40+ composants shadcn
+│   ├── hooks/                     # Hooks React
+│   │   ├── use-toast.ts
+│   │   └── use-mobile.ts
+│   ├── lib/                       # Utils TypeScript (types.ts, utils.ts)
+│   ├── public/                    # Assets + captures (home, gantt, cercle, bar, tableau, fichier, gen-fichier)
+│   ├── next.config.mjs, postcss.config.mjs, tsconfig.json, components.json, next-env.d.ts
+│   ├── .next/                     # Cache Next.js (gitignored)
+│   └── node_modules/              # Dépendances (gitignored)
+
+├── 🔧 BACKEND C (moteur simu)
+│   ├── src/       # main.c, scheduler.c, parser.c, generate_config.c, utils.c
+│   ├── include/   # process.h, scheduler.h, parser.h, generate_config.h, utils.h
+│   ├── policies/  # fifo.c, roundrobin.c, priority_preemptive.c, srt.c, multilevel.c, multilevel_dynamic.c
+│   ├── tests/     # test_fifo.c, test_priority.c, test_roundrobin.c, test_multilevel.c, test_multilevel_dynamic.c, test_parser.c, testfile.txt
+│   ├── Makefile   # Build (all, clean, mrproper)
+│   ├── ordonnanceur       # binaire Linux
+│   └── ordonnanceur.exe   # binaire Windows
+
+├── 📦 BUILD
+│   └── build/     # Objets .o générés par make (fifo.o, scheduler.o, parser.o, ...)
+
+├── ⚙️ CONFIG & ROOT
+│   ├── config/                # Fichiers config (.txt)
+│   │   ├── sample_config.txt
+│   │   └── config_*.txt
+│   ├── package.json           # Scripts pnpm (dev/build/start)
+│   ├── pnpm-lock.yaml         # Lock pnpm
+│   ├── .gitignore             # Ignore node_modules/, .next/, build/, *.o, test_*
+│   ├── tsconfig.json, next.config.mjs, postcss.config.mjs, components.json
+│   ├── Makefile               # Build C
+│   └── .vscode/              # Settings VS Code
+
+└── 📚 DOCUMENTATION
+  ├── Documentation.md       # Documentation technique
+  ├── Documentation.pdf      # Version PDF
+  ├── ANALYSE_LICENCES.pdf   # Analyse licences
+  ├── README.md              # Guide utilisateur
+  └── LICENSE                # MIT
 ```
 
 **Métadonnées Dépôt GitHub** :
