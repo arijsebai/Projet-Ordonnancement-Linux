@@ -948,159 +948,125 @@ Runtime  : Node.js 20.19.6 (frontend)
 **Architecture Hybride : Next.js (Frontend) + C (Backend)**
 
 ```
-Projet-Ordonnancement-Linux/  [github.com/arijsebai/Projet-Ordonnancement-Linux]
-│
+Projet-Ordonnancement-Linux/
+[github.com/arijsebai/Projet-Ordonnancement-Linux • branch: dev]
+
 ├─── 🎨 FRONTEND (Next.js 16 + React 19 + TypeScript)
+│    ├── app/                                   # Next.js App Router
+│    │   ├── page.tsx                          # Page principale
+│    │   ├── layout.tsx                        # Layout racine
+│    │   ├── globals.css                       # Styles globaux
+│    │   └── api/
+│    │       ├── schedule/route.ts             # POST /api/schedule
+│    │       └── parse-config/route.ts         # POST /api/parse-config
 │    │
-│    ├── app/                                    # Next.js App Router (React 19)
-│    │   ├── page.tsx                           # Page principale UI
-│    │   │   └─ AlgorithmSelector + FileGeneration + ResultsDisplay
-│    │   ├── layout.tsx                         # Layout racine (ThemeProvider, metadata)
-│    │   ├── globals.css                        # Styles Tailwind globaux
-│    │   └── api/                               # API Routes Next.js (Node.js runtime)
-│    │       ├── schedule/route.ts              # POST /api/schedule → C backend
-│    │       └── parse-config/route.ts          # POST /api/parse-config → validation
+│    ├── components/                           # React Components
+│    │   ├── algorithm-selector.tsx
+│    │   ├── file-generation-dialog.tsx
+│    │   ├── results-display.tsx
+│    │   ├── theme-provider.tsx
+│    │   └── ui/                               # Shadcn UI (46 composants)
 │    │
-│    ├── components/                            # React Components (TSX)
-│    │   ├── algorithm-selector.tsx             # Dropdown algorithmes + paramètres
-│    │   ├── file-generation-dialog.tsx         # Dialog génération config
-│    │   ├── results-display.tsx                # Gantt + Charts + Table stats
-│    │   ├── theme-provider.tsx                 # Dark/Light mode (next-themes)
-│    │   └── ui/                                # Radix UI primitives (46 composants)
-│    │       ├── button.tsx, card.tsx, dialog.tsx, tabs.tsx, table.tsx
-│    │       ├── accordion.tsx, alert.tsx, avatar.tsx, badge.tsx
-│    │       └── ... [43 autres composants UI shadcn/ui]
+│    ├── lib/                                  # Utilitaires TypeScript
+│    │   ├── types.ts                          # Interfaces/Types
+│    │   └── utils.ts                          # Helpers
 │    │
-│    ├── lib/                                   # Utilitaires TypeScript
-│    │   ├── types.ts                           # Interfaces/Types (Process, Result, Config, etc.)
-│    │   └── utils.ts                           # Helpers classnames (cn)
+│    ├── hooks/                                # Hooks React
+│    │   ├── use-toast.ts
+│    │   └── use-mobile.ts
 │    │
-│    ├── hooks/                                 # Hooks React personnalisés
-│    │   ├── use-toast.ts                       # Toast notifications (sonner)
-│    │   └── use-mobile.ts                      # Responsive breakpoint detection
+│    ├── public/                               # Assets statiques
+│    │   ├── *.svg, *.png                      # Icons & favicons
+│    │   ├── home.png, gantt.png, cercle.png   # Screenshots
+│    │   ├── bar.png, tableau.png, fichier.png
+│    │   └── gen-fichier.png
 │    │
-│    ├── public/                                # Assets statiques
-│    │   ├── icon.svg, placeholder.svg          # Icons (svg, png)
-│    │   ├── apple-icon.png, icon-*             # Favicons (Next.js)
-│    │   ├── home.png, gantt.png, cercle.png    # Screenshots UI (documentation)
-│    │   ├── bar.png, tableau.png, fichier.png  # Charts screenshots
-│    │   ├── gen-fichier.png                    # Dialog generation screenshot
-│    │   └── processus.png                      # Process visualization
-│    │
-│    ├── next.config.mjs                        # Config Next.js
-│    ├── tsconfig.json                          # Config TypeScript (strict mode)
-│    ├── postcss.config.mjs                     # PostCSS + Tailwind CSS
-│    ├── components.json                        # Shadcn UI aliases config
-│    ├── package.json                           # Dependencies + scripts (build, dev, start)
-│    ├── pnpm-lock.yaml                         # Lock file pnpm (v9.16.0)
-│    ├── .next/                                 # Cache Next.js (gitignored)
-│    ├── .vscode/                               # Settings VS Code (extensions, keybindings)
-│    └── node_modules/                          # Dependencies installées (gitignored)
+│    ├── node_modules/                         # Dependencies (gitignored)
+│    ├── .next/                                # Cache Next.js (gitignored)
+│    ├── next.config.mjs                       # Config Next.js
+│    ├── tsconfig.json                         # Config TypeScript
+│    ├── postcss.config.mjs                    # PostCSS config
+│    ├── components.json                       # Shadcn UI config
+│    ├── next-env.d.ts                         # Auto-généré Next.js types
+│    └── .vscode/                              # VS Code settings
 │
 ├─── 🔧 BACKEND C (Moteur simulation)
+│    ├── src/                                  # Code source C11
+│    │   ├── main.c                            # Point d'entrée
+│    │   ├── scheduler.c                       # Moteur simulation
+│    │   ├── parser.c                          # Parser config
+│    │   ├── generate_config.c                 # Générateur config
+│    │   └── utils.c                           # Utilitaires
 │    │
-│    ├── src/                                   # Code source C (Standard C11)
-│    │   ├── main.c                             # Point d'entrée (modes: interactif, --api)
-│    │   ├── scheduler.c                        # Moteur simulation + 6 algorithmes
-│    │   ├── parser.c                           # Parse fichiers config (.txt)
-│    │   ├── generate_config.c                  # Génération configs aléatoires
-│    │   └── utils.c                            # Utilitaires affichage
+│    ├── include/                              # Headers C
+│    │   ├── process.h
+│    │   ├── scheduler.h
+│    │   ├── parser.h
+│    │   ├── generate_config.h
+│    │   └── utils.h
 │    │
-│    ├── include/                               # Headers C
-│    │   ├── process.h                          # struct process, états (READY/RUNNING/BLOCKED)
-│    │   ├── scheduler.h                        # Prototypes simulations, résultats
-│    │   ├── parser.h                           # parse_config_file, validate_config
-│    │   ├── generate_config.h                  # generate_config (int n, ...)
-│    │   └── utils.h                            # Fonctions utilitaires display
+│    ├── policies/                             # 6 Algorithmes
+│    │   ├── fifo.c
+│    │   ├── priority_preemptive.c
+│    │   ├── roundrobin.c
+│    │   ├── srt.c
+│    │   ├── multilevel.c
+│    │   └── multilevel_dynamic.c
 │    │
-│    ├── policies/                              # 6 Algorithmes ordonnancement (sources .c)
-│    │   ├── fifo.c                             # First-In First-Out
-│    │   ├── priority_preemptive.c              # Priority préemptive
-│    │   ├── roundrobin.c                       # Round Robin avec quantum
-│    │   ├── srt.c                              # Shortest Remaining Time First
-│    │   ├── multilevel.c                       # Multilevel Queue (statique)
-│    │   └── multilevel_dynamic.c               # Multilevel Feedback Queue (dynamique + aging)
+│    ├── tests/                                # Tests unitaires C
+│    │   ├── test_fifo.c
+│    │   ├── test_priority.c
+│    │   ├── test_roundrobin.c
+│    │   ├── test_multilevel.c
+│    │   ├── test_multilevel_dynamic.c
+│    │   ├── test_parser.c
+│    │   └── testfile.txt
 │    │
-│    ├── tests/                                 # Tests unitaires C
-│    │   ├── test_fifo.c, test_priority.c       # Tests algorithmes
-│    │   ├── test_roundrobin.c, test_multilevel.c
-│    │   ├── test_multilevel_dynamic.c, test_parser.c
-│    │   └── testfile.txt                       # Données test
-│    │
-│    ├── build/                                 # Fichiers objets .o (généré par Makefile)
-│    │
-│    ├── ordonnanceur                           # Binaire Linux compilé (ELF x86_64)
-│    ├── ordonnanceur.exe                       # Binaire Windows cross-compilé
-│    ├── Makefile                               # Build system (all, clean, mrproper, tests)
-│    │   └─ Compile avec GCC 11+ (std=c11, Wall, Wextra, O2)
-│    │
-│    └── (test_* binaries)                      # Binaires tests (NON trackés via .gitignore)
+│    ├── Makefile                              # Build system C
+│    ├── ordonnanceur                          # Binaire Linux (49 KB)
+│    └── ordonnanceur.exe                      # Binaire Windows (504 KB)
 │
-├─── 📋 CONFIGURATION & DONNÉES
+├─── 📦 BUILD & COMPILATION
+│    ├── build/                                # Fichiers objets .o
+│    │   ├── *.o (11 fichiers)                 # fifo.o, scheduler.o, parser.o, etc.
+│    │   └── Générés par: make
 │    │
-│    └── config/                                # Fichiers configuration processus (.txt)
-│        ├── sample_config.txt                  # Exemple par défaut (7 processus)
-│        ├── config_YYYYMMDD_HHMMSS.txt         # Configs générées (timestamp)
-│        └── sample_config_YYYYMMDD_HHMMSS.txt  # Configs générées par UI
+│    └── (test_* binaries ignorés par .gitignore)
 │
-├─── 📚 DOCUMENTATION
+├─── ⚙️ CONFIGURATION & DONNÉES
+│    ├── config/                               # Fichiers configuration
+│    │   ├── sample_config.txt                 # Config exemple
+│    │   └── config_*.txt                      # Configs générées
 │    │
-│    ├── Documentation.md                       # Documentation technique COMPLÈTE (1928 lignes)
-│    ├── README.md                              # Guide utilisateur + Installation + Usage
-│    ├── PROFESSIONAL_README.md                 # README format professionnel (recruteurs)
-│    ├── API_REFERENCE.md                       # Référence API Next.js routes
-│    ├── ARCHITECTURE.md                        # Détails architecture système
-│    ├── INDEX.md                               # Index navigation docs
-│    ├── PROJECT_SUMMARY.txt                    # Résumé complet projet
-│    ├── UPDATES_MAKEFILE_FRONTEND.md           # Historique mises à jour
-│    ├── Documentation.pdf                      # Version PDF (auto-générée)
-│    └── LICENSE                                # MIT License
+│    ├── package.json                          # Dependencies Node.js
+│    ├── pnpm-lock.yaml                        # Lock file
+│    ├── tsconfig.json                         # Config TypeScript
+│    ├── next.config.mjs                       # Config Next.js
+│    ├── postcss.config.mjs                    # PostCSS config
+│    ├── components.json                       # Shadcn UI config
+│    ├── Makefile                              # Build C
+│    ├── .gitignore                            # Fichiers ignorés
+│    ├── next-env.d.ts                         # Types Next.js auto-générés
+│    └── .git/                                 # Dépôt Git local
 │
-├─── ⚙️ CONFIGURATION RACINE
-│    │
-│    ├── .git/                                  # Dépôt Git local
-│    ├── .gitignore                             # Fichiers ignorés (node_modules, build/, .next/, *.o, test_*)
-│    ├── package.json                           # Dependencies Node.js (my-v0-project v0.1.0)
-│    ├── pnpm-lock.yaml                         # Lock file pnpm
-│    ├── tsconfig.json                          # Config TypeScript (strict: true)
-│    ├── next.config.mjs                        # Config Next.js (typescript, images)
-│    ├── postcss.config.mjs                     # PostCSS config (Tailwind)
-│    ├── components.json                        # Shadcn UI config (aliases)
-│    ├── Makefile                               # Build system C
-│    ├── next-env.d.ts                          # Auto-généré Next.js types
-│    ├── .vscode/                               # VS Code settings (extensions, keybindings)
-│    └── .next/                                 # Cache Next.js dev/prod (gitignored)
-│
-└─── 📦 DÉPÔT GITHUB
-     │
-     ├── **URL** : https://github.com/arijsebai/Projet-Ordonnancement-Linux
-     ├── **Branch actif** : `dev` (branche principale de développement)
-     ├── **Remote** : `origin` (github.com/arijsebai/...)
-     ├── **Licence** : MIT (fichier LICENSE)
-     │
-     └── **Fichiers ignorés (.gitignore)** :
-         ├── Fichiers objets C : *.o, *.obj, *.elf
-         ├── Binaires tests : test_*
-         ├── Dossiers Node.js : node_modules/, .next/
-         ├── Dossiers build : build/
-         ├── Fichiers temporaires : *.tmp, *.log
-         ├── Exécutables : *.exe, *.out, *.app
-         └── Caches : *.pdb, *.dSYM/
+└─── 📚 DOCUMENTATION
+     ├── Documentation.md                      # Documentation technique (1885 lignes)
+     ├── Documentation.pdf                     # Version PDF auto-générée
+     ├── README.md                             # Guide utilisateur
+     ├── LICENSE                               # MIT License
+     └── .vscode/                              # VS Code settings
 ```
 
-**Métadonnées Dépôt Git** :
+**Métadonnées Dépôt GitHub** :
 
 | Propriété | Valeur |
 |-----------|--------|
-| **Repository** | `Projet-Ordonnancement-Linux` |
-| **Owner** | `arijsebai` (Arij Sebai) |
-| **URL Git** | `https://github.com/arijsebai/Projet-Ordonnancement-Linux.git` |
+| **URL** | `github.com/arijsebai/Projet-Ordonnancement-Linux` |
+| **Owner** | `arijsebai` |
 | **Branch actif** | `dev` |
-| **Remote** | `origin` → `github.com/arijsebai/Projet-Ordonnancement-Linux.git` |
-| **Licence** | MIT (voir fichier `LICENSE`) |
-| **Package Name** | `my-v0-project` (v0.1.0) |
-| **Commandes Build** | `pnpm build` (Next.js), `make` (C backend) |
-| **Commandes Dev** | `pnpm dev` (frontend), `./ordonnanceur` (backend) |
+| **Licence** | MIT |
+| **Package** | `my-v0-project` v0.1.0 |
+| **Binaires** | `ordonnanceur` (Linux), `ordonnanceur.exe` (Windows) |
 
 **Structure Logique par Rôle**
 
