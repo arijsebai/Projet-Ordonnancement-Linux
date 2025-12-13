@@ -123,6 +123,10 @@ L'interface utilisateur complète et toutes les captures d'écran sont document�
 - 📋 Tableau récapitulatif complet
 - ⚙️ Génération et upload de fichiers de configuration
 
+## 2. Choix des Structures de Données
+
+### 2.1 Structure `process` : Le Cœur du Système
+
 ```c
 #define NAME_LEN 64
 #define READY 0
@@ -989,8 +993,6 @@ React Component (ResultsDisplay)
 2. **POST /api/schedule** : Lance simulation → retourne résultats complets
 
 
-### 4.5 Flow d'Exécution Complet
-
 ### 4.5 Interface Utilisateur et Visualisations
 
 L'application web offre une interface moderne et interactive pour simuler et visualiser l'ordonnancement des processus. Cette section présente les composants React et leurs captures d'écran respectives.
@@ -1020,12 +1022,6 @@ L'application web offre une interface moderne et interactive pour simuler et vis
 - Blocs d'exécution : barres colorées proportionnelles à la durée
 - Zones d'attente (A) : segments clairs représentant l'état READY
 - Indicateur temps courant (T = Xs) avec barre de progression
-
-**Avantages pédagogiques** :
-- Visualiser l'ordre exact d'exécution selon l'algorithme sélectionné
-- Observer les effets de préemption et context switching
-- Analyser l'efficacité de chaque politique d'ordonnancement
-- Replay pas à pas pour comprendre chaque transition
 
 ![Diagramme de Gantt interactif affichant la timeline d'exécution des processus](./public/gantt.png)
 
@@ -1121,8 +1117,6 @@ L'application web offre une interface moderne et interactive pour simuler et vis
 
 *Figure 4.8 : Zone d'upload avec validation et aperçu des processus*
 
-
-### 4.6 Mapping Algorithmes Frontend → Backend
 
 
 ## 5. Déroulement du Développement SCRUM
@@ -1582,7 +1576,7 @@ make mrproper     # Nettoyage complet
 
 **Pourquoi** : Indique à `make` que ce ne sont pas des fichiers, mais des commandes. Évite conflits si un fichier s'appelle "clean".
 
-### 7.6 Principes et Avantages
+### 7.5 Principes et Avantages
 
 | Principe | Avantage |
 |----------|----------|
@@ -1593,7 +1587,7 @@ make mrproper     # Nettoyage complet
 | **Nettoyage facile** | make clean = repartir à zéro |
 | **Portabilité** | Variables faciles à modifier pour autre compilateur |
 
-### 7.7 Utilisation Pratique
+### 7.6 Utilisation Pratique
 
 ```bash
 # Compilation complète
@@ -1614,12 +1608,94 @@ Ce projet a permis de réaliser un **simulateur complet d'ordonnancement de proc
 
 #### Objectifs Techniques Atteints
 
-✅ **6 algorithmes d'ordonnancement implémentés et fonctionnels** 
+✅ **6 algorithmes d'ordonnancement implémentés et fonctionnels** : FIFO, Round-Robin, Priority Preemptive, SRT, Multilevel Queue, Multilevel Feedback Queue (avec anti-famine)
 
-✅ **Architecture modulaire et extensible** 
+✅ **Architecture modulaire et extensible** : ajout d'un nouvel algorithme = 1 fichier dans `policies/`, politique de sélection encapsulée
 
-✅ **Générateur automatique de configurations** 
+✅ **Interface web moderne et interactive** : Next.js 16 + React 19, visualisations temps réel (Gantt, Pie Chart, Bar Chart), contrôles interactifs (play/pause/step/zoom)
 
-✅ **Parser robuste** 
+✅ **Générateur automatique de configurations** : création fichiers de test aléatoires avec paramètres personnalisables (nb processus, ranges)
 
-✅ **Compilation automatisée** 
+✅ **Parser robuste** : validation syntaxe, gestion erreurs, support commentaires, fichiers de configuration flexibles
+
+✅ **Compilation automatisée** : Makefile avec compilation incrémentale, gestion dépendances, nettoyage sélectif
+
+✅ **Métriques complètes** : temps d'attente, turnaround time, finish time, makespan, CPU utilization
+
+### 8.2 Compétences Acquises
+
+#### A. Systèmes d'Exploitation
+
+- **Ordonnancement de processus** : compréhension approfondie des algorithmes FIFO, RR, Priority, SRT, Multilevel
+- **États des processus** : transitions READY → RUNNING → TERMINATED, gestion préemption
+- **Métriques de performance** : analyse temps d'attente, turnaround, CPU utilization
+- **Problème de famine** : implémentation solution Multilevel Feedback Queue avec aging dynamique
+
+#### B. Programmation C
+
+- **Structures de données** : tableaux dynamiques, gestion mémoire manuelle
+- **Modularité** : architecture extensible avec pointeurs de fonction
+- **Parsing** : lecture fichiers, validation syntaxe, gestion erreurs
+- **Compilation** : Makefile avancé, gestion dépendances, compilation incrémentale
+
+#### C. Développement Web Moderne
+
+- **React 19 et Next.js 16** : Server Components, App Router, streaming SSR
+- **TypeScript** : typage statique, interfaces, validation Zod
+- **Visualisations interactives** : Recharts, animations, contrôles temps réel
+- **Architecture fullstack** : API Routes, intégration backend C via spawn
+
+#### D. Méthodologie Agile
+
+- **SCRUM** : sprints, product backlog, sprint backlog, métriques
+- **Travail d'équipe** : coordination 3 développeurs, répartition tâches
+- **Documentation** : architecture, spécifications techniques, README complet
+
+### 8.3 Perspectives d'Amélioration
+
+#### Améliorations Techniques
+
+1. **Algorithmes supplémentaires** : 
+   - Completely Fair Scheduler (CFS) Linux-like
+   - Earliest Deadline First (EDF) pour temps réel
+   - Lottery Scheduling (stochastique)
+
+2. **Fonctionnalités avancées** :
+   - Support multi-cœurs (parallélisation réelle)
+   - Gestion I/O blocking (états BLOCKED réels)
+   - Context switching cost (overhead simulation)
+   - Memory management (pagination, segmentation)
+
+3. **Interface utilisateur** :
+   - Comparaison côte-à-côte de 2 algorithmes
+   - Export PDF/PNG des diagrammes
+   - Mode sombre/clair persistant
+   - Sauvegarde configurations dans LocalStorage
+
+4. **Performance** :
+   - WebAssembly pour backend C (exécution navigateur)
+   - Worker threads pour calculs lourds
+   - Caching des résultats de simulation
+
+#### Déploiement Production
+
+- **Hébergement** : Vercel (frontend) + Railway/Render (backend API)
+- **CI/CD** : GitHub Actions pour tests automatiques et déploiement
+- **Monitoring** : Sentry pour erreurs, Analytics pour usage
+- **Documentation** : GitBook ou Docusaurus pour documentation interactive
+
+### 8.4 Conclusion Finale
+
+Ce projet a permis de réaliser un **simulateur d'ordonnancement de processus pédagogique et fonctionnel**, combinant rigueur technique (backend C optimisé) et expérience utilisateur moderne (interface React interactive).
+
+L'architecture modulaire facilite l'extension future, et la documentation complète garantit la maintenabilité du projet. Les visualisations interactives rendent les concepts d'ordonnancement accessibles et compréhensibles.
+
+Le projet démontre la maîtrise de compétences variées : systèmes d'exploitation, programmation système en C, développement web fullstack moderne, et méthodologie Agile SCRUM.
+
+---
+
+**Documentation Technique Complète**  
+**Projet Ordonnanceur Multitâche de Processus sous Linux**  
+**Version 1.0 - Décembre 2025**  
+
+© Équipe de Développement - Mini-Projet Systèmes d'Exploitation 
