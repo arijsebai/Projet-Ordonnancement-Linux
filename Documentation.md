@@ -118,79 +118,59 @@ Ce projet est un **simulateur d'ordonnancement de processus sous Linux** avec un
 
 #### 1. Interface Principale
 
+**Page d'accueil de l'application**
+
+Sélecteur d'algorithmes (dropdown avec 6 options : FIFO, RR, Priority, SRT, Multilevel, Multilevel Dynamic) avec paramètres dynamiques : quantum (Round-Robin, Multilevel Dynamic), ordre de priorité (ascendant/descendant). Boutons d'action : Générer Config, Upload Fichier, Lancer Simulation. Liste des processus chargés avec détails (ID, Arrival, Execution, Priority).
+
 ![Page d'accueil affichant le sélecteur d'algorithmes et les contrôles principaux](./public/home.png)
 
-**Figure 1.1** — *Page d'accueil de l'application*
-- Sélecteur d'algorithmes (dropdown avec 6 options : FIFO, RR, Priority, SRT, Multilevel, Multilevel Dynamic)
-- Paramètres dynamiques : quantum (Round-Robin, Multilevel Dynamic), ordre de priorité (ascendant/descendant)
-- Boutons d'action : Générer Config, Upload Fichier, Lancer Simulation
-- Liste des processus chargés avec détails (ID, Arrival, Execution, Priority)
+#### 2. Diagramme de Gantt — Timeline d'Exécution
 
----
+**Diagramme de Gantt interactif**
 
-#### 2. Visualisations des Résultats
+Timeline horizontale avec processus colorés par ID (palette 20 couleurs). Contrôles de lecture : Play/Pause, Step Forward, Step Backward, Reset. Zoom et navigation temporelle. Légende automatique avec correspondance couleur-processus. États visuels : Running (rempli), Waiting (hachuré), Completed (grisé).
 
 ![Diagramme de Gantt interactif affichant la timeline d'exécution des processus](./public/gantt.png)
 
-**Figure 1.2** — *Diagramme de Gantt interactif*
-- Timeline horizontale avec processus colorés par ID (palette 20 couleurs)
-- Contrôles de lecture : Play/Pause, Step Forward, Step Backward, Reset
-- Zoom et navigation temporelle
-- Légende automatique avec correspondance couleur-processus
-- États visuels : Running (rempli), Waiting (hachuré), Completed (grisé)
+#### 3. Répartition CPU — Diagramme Circulaire
 
----
+**Diagramme circulaire (Pie Chart)**
+
+Répartition du temps CPU par processus (pourcentages). Couleurs synchronisées avec le diagramme de Gantt. Tooltip au survol avec temps exact. Permet d'identifier rapidement les processus les plus consommateurs de ressources.
 
 ![Graphique circulaire montrant la répartition du temps CPU entre les processus](./public/cercle.png)
 
-**Figure 1.3a** — *Diagramme circulaire (Pie Chart)*
-- Répartition du temps CPU par processus (pourcentages)
-- Couleurs synchronisées avec le diagramme de Gantt
-- Tooltip au survol avec temps exact
+#### 4. Comparaison Statistiques — Graphique à Barres
 
----
+**Graphique à barres (Bar Chart)**
+
+Comparaison temps d'attente (waiting) vs temps total (turnaround) par processus. Axes : X = Process ID, Y = Time units. Deux séries de barres colorées (waiting vs total). Visualisation facile des performances par algorithme.
 
 ![Graphique à barres comparant les temps d'attente et temps total pour chaque processus](./public/bar.png)
 
-**Figure 1.3b** — *Graphique à barres (Bar Chart)*
-- Comparaison temps d'attente (waiting) vs temps total (turnaround) par processus
-- Axes : X = Process ID, Y = Time units
-- Deux séries de barres colorées (waiting vs total)
+#### 5. Tableau Récapitulatif — Données Détaillées
 
----
+**Tableau statistiques détaillées**
+
+Colonnes : Process ID, Arrival Time, Execution Time, Wait Time, Finish Time, Priority, Turnaround. Métriques globales : Average Wait Time, Makespan, CPU Utilization. Tri par colonnes (cliquable). Export possible (copy/paste vers Excel).
 
 ![Tableau détaillé des statistiques d'exécution pour tous les processus](./public/tableau.png)
 
-**Figure 1.4** — *Tableau récapitulatif des statistiques*
-- Colonnes : Process ID, Arrival Time, Execution Time, Wait Time, Finish Time, Priority, Turnaround
-- Métriques globales : Average Wait Time, Makespan, CPU Utilization
-- Tri par colonnes (cliquable)
-- Export possible (copy/paste vers Excel)
+#### 6. Génération Automatique — Configuration
 
----
+**Dialog de génération automatique de configuration**
 
-#### 3. Fonctionnalités Avancées
+Paramètres : Nombre de processus (1-50). Plages configurables : Arrival Time (min/max), Execution Time (min/max), Priority (min/max). Génération aléatoire avec prévisualisation du fichier `.txt`. Bouton téléchargement direct pour intégration rapide.
 
 ![Dialog de génération automatique de fichier de configuration](./public/gen-fichier.png)
 
-**Figure 1.5** — *Dialog de génération automatique de configuration*
-- Paramètres : Nombre de processus (1-50)
-- Plages configurables : Arrival Time (min/max), Execution Time (min/max), Priority (min/max)
-- Génération aléatoire avec prévisualisation du fichier `.txt`
-- Bouton téléchargement direct
+#### 7. Upload et Validation — Fichier Configuration
 
----
+**Zone d'upload et validation de fichier**
+
+Drag & drop ou sélection fichier `.txt`. Validation en temps réel de la syntaxe. Aperçu des processus parsés en tableau. Messages d'erreur détaillés si format invalide. Bouton confirmation pour charger la configuration dans l'application.
 
 ![Interface d'upload avec drag & drop et validation de fichier de configuration](./public/fichier.png)
-
-**Figure 1.6** — *Zone d'upload et validation de fichier*
-- Drag & drop ou sélection fichier `.txt`
-- Validation en temps réel de la syntaxe
-- Aperçu des processus parsés en tableau
-- Messages d'erreur détaillés si format invalide
-- Bouton confirmation pour charger la configuration
-
----
 
 ## 2. Choix des Structures de Données
 
