@@ -921,9 +921,6 @@ Projet-Ordonnancement-Linux/
 │    │   ├── use-toast.ts               # Toast notifications (sonner)
 │    │   └── use-mobile.ts              # Responsive breakpoint detection
 │    │
-│    ├── styles/                        # CSS additionnels
-│    │   └── globals.css                # Lien symbolique vers app/globals.css
-│    │
 │    ├── public/                        # Assets statiques (images, fonts, etc.)
 │    │
 │    ├── next.config.mjs                # Config Next.js (typescript, images)
@@ -972,7 +969,7 @@ Projet-Ordonnancement-Linux/
 │    ├── ordonnanceur                   # Binaire Linux compilé
 │    ├── ordonnanceur.exe               # Binaire Windows cross-compilé
 │    ├── Makefile                       # Build system (all, clean, mrproper)
-│    └── test_*                         # Binaires tests unitaires (test_fifo, test_priority, etc.)
+│    └── tests/*.c                      # Sources de tests unitaires (binaires test_* non trackés)
 │
 ├─── CONFIGURATION & DONNÉES
 │    │
@@ -998,13 +995,34 @@ Projet-Ordonnancement-Linux/
      ├── .gitignore                     # Ignore (node_modules, build, .next, etc.)
      ├── .next/                         # Cache Next.js (dev/production)
      ├── .vscode/                       # Settings VS Code
-     └── mon_test_fifo, test_multilevel, test_priority  # Tests exécutables
+    └── (aucun binaire de test tracké)                 # Les binaires test_* sont ignorés par .gitignore
 ```
 
 **Dépôt GitHub** :
 - URL : `https://github.com/arijsebai/Projet-Ordonnancement-Linux.git`
 - Branch active : `dev`
 - Remote : `origin`
+
+**Commandes usuelles** :
+
+```bash
+# Vérifier l'état
+git status
+
+# Valider et pousser sur la branche active (dev)
+git add -A
+git commit -m "docs: mise à jour architecture et git"
+git push origin dev
+
+# Vérifier le remote et la branche courante
+git remote -v
+git rev-parse --abbrev-ref HEAD
+```
+
+**.gitignore (extraits pertinents)** :
+- `node_modules/`, `.next/`, `build/` (artifacts Next.js et C)
+- `test_*`, `mon_test_*` (binaires de test non trackés)
+- `ordonnanceur` et `*.exe` (binaires compilés selon besoin)
 
 **Structure Logique par Rôle**
 
@@ -1026,7 +1044,7 @@ Projet-Ordonnancement-Linux/
         │  API Route (Node.js)          │
         │  /api/schedule/route.ts       │
         │  ├─ mapAlgorithm()            │
-        │  ├─ spawn("./ordonnanceur")   │
+        │  ├─ spawn("./ordonnanceur", [--api, --config <tmp>, --algo <name>, --quantum <q>, --prio-order <asc|desc>]) │
         │  └─ parse JSON stdout         │
         └──────────┬────────────────────┘
                    │
@@ -1078,8 +1096,6 @@ Le backend C (`ordonnanceur`) supporte **3 modes** :
   "makespan": 25
 }
 ```
-
-### 4.4 Intégration Frontend ↔ Backend
 
 ### 4.4 Intégration Frontend ↔ Backend
 
