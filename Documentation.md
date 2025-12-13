@@ -50,7 +50,6 @@
    - 2.1 Structure `process` : Le Cœur du Système
    - 2.2 Représentation des Données : Tableau Dynamique
    - 2.3 Représentation Implicite de la Ready Queue
-   - 2.4 État des Processus : Machine d'État
 
 ### **3. Choix des Algorithmes d'Ordonnancement** ............... [Page 6](#3-choix-des-algorithmes-dordonnancement)
    - 3.1 FIFO (First-In First-Out)
@@ -59,7 +58,6 @@
    - 3.4 SRT (Shortest Remaining Time First)
    - 3.5 Multilevel Queue (Statique)
    - 3.6 Multilevel Feedback Queue (Dynamique)
-   - 3.7 Tableau Comparatif des Algorithmes
 
 ### **4. Technologies et Architecture** ........................... [Page 17](#4-technologies-et-architecture)
    - 4.1 Choix des Technologies
@@ -67,7 +65,6 @@
    - 4.3 Backend C : Mode Interactif vs Mode API
    - 4.4 Intégration complète : Frontend Next.js + Backend C
    - 4.5 Flow d'Exécution Complet
-   - 4.6 Mapping des Algorithmes Frontend → Backend
 
 ### **5. Déroulement du Développement SCRUM** ................... [Page 19](#5-déroulement-du-développement-scrum)
    - 5.1 Organisation Équipe
@@ -82,7 +79,6 @@
    - 6.1 Point d'Entrée (main.c) : Modes Interactif et API
    - 6.2 Format Fichier Configuration
    - 6.3 Générateur Configuration Automatique
-   - 6.4 Fichiers Headers et Structures Partagées
 ### **7. Makefile et Compilation** .................................. [Page 27](#7-makefile-et-compilation)
    - 7.1 Objectif du Makefile
    - 7.2 Variables Principales
@@ -94,7 +90,6 @@
 
 ### **8. Conclusion** ................................................. [Page 31](#8-conclusion)
 
----
 
 <div style="page-break-after: always;"></div>
 
@@ -117,6 +112,74 @@ Ce projet est un **simulateur d'ordonnancement de processus sous Linux** avec un
 **Technologies** : Next.js 16, React 19, TypeScript, Tailwind CSS, Radix UI, Recharts (frontend) + C11/GCC, Make (backend)
 
 **Dépôt Git** : [github.com/arijsebai/Projet-Ordonnancement-Linux](https://github.com/arijsebai/Projet-Ordonnancement-Linux) (branch: `dev`)
+
+### 1.1 Captures d'Écran de l'Application Web
+
+> **📸 Galerie d'Images** : Les captures ci-dessous illustrent l'interface utilisateur complète de l'application.
+>
+> Pour visualiser ces images, placez les fichiers PNG correspondants dans le dossier `public/screenshots/` à la racine du projet.
+
+#### Interface Principale
+
+![Page d'accueil](./public/screenshots/app-home.png)
+
+**Figure 1.1** — *Page d'accueil de l'application*
+- Sélecteur d'algorithmes (dropdown avec 6 options)
+- Paramètres dynamiques : quantum (Round-Robin, Multilevel), ordre de priorité (ascendant/descendant)
+- Boutons : Générer Config, Upload Fichier, Lancer Simulation
+- Liste des processus chargés avec détails (ID, Arrival, Execution, Priority)
+
+---
+
+#### Visualisations des Résultats
+
+![Diagramme de Gantt](./public/screenshots/app-gantt.png)
+
+**Figure 1.2** — *Diagramme de Gantt interactif*
+- Timeline horizontale avec processus colorés par ID
+- Contrôles de lecture : Play/Pause, Step Forward, Step Backward, Reset
+- Zoom et navigation temporelle
+- Légende automatique avec correspondance couleur-processus
+
+---
+
+![Graphiques statistiques](./public/screenshots/app-charts.png)
+
+**Figure 1.3** — *Graphiques de distribution (Pie Chart & Bar Chart)*
+- **Pie Chart** : Répartition du temps CPU par processus (pourcentages)
+- **Bar Chart** : Comparaison temps d'attente vs temps total par processus
+- Données synchronisées avec le diagramme de Gantt
+
+---
+
+![Tableau détaillé](./public/screenshots/app-table.png)
+
+**Figure 1.4** — *Tableau récapitulatif des statistiques*
+- Colonnes : Process ID, Arrival Time, Execution Time, Finish Time, Wait Time, Priority
+- Métriques globales : Average Wait Time, Makespan, CPU Utilization
+- Export possible (CSV via copy/paste)
+
+---
+
+#### Fonctionnalités Avancées
+
+![Génération de configuration](./public/screenshots/app-generate-dialog.png)
+
+**Figure 1.5** — *Dialog de génération automatique de configuration*
+- Paramètres : Nombre de processus (1-50)
+- Plages configurables : Arrival Time, Execution Time, Priority
+- Génération aléatoire avec prévisualisation
+
+---
+
+![Gestion des erreurs](./public/screenshots/app-error-toast.png)
+
+**Figure 1.6** — *Toast de notification d'erreur*
+- Erreur : Binaire backend introuvable (`ordonnanceur` non compilé)
+- Message clair avec action suggérée ("Exécutez `make` pour le générer")
+- Auto-dismiss après 5 secondes
+
+---
 
 ## 2. Choix des Structures de Données
 
@@ -558,8 +621,6 @@ Cet algorithme gère les processus en respectant une **hiérarchie stricte de pr
 
 **Convention de priorité** : Grande valeur = Haute Priorité (ex: 10 > 1)
 
-⚠️ **Note** : Cette convention est inversée par rapport au standard Unix où petite valeur = haute priorité. Notre implémentation utilise la logique inverse pour simplification.
-
 
 #### Algorithme de Sélection (fonction `select_multilevel`)
 
@@ -799,21 +860,7 @@ Calculer :
 | **Port 3000** | Next.js dev server | http://localhost:3000 |
 | **Child Process Spawn** | Backend invocation | Node.js exécute `./ordonnanceur --api` |
 
-#### F. Dépendances Frontend Complètes (package.json)
-
-**Dependencies** (~50) :
-- React ecosystem : @radix-ui/* (40+ UI components)
-- Visualization : recharts (charts, gantt)
-- Notifications : sonner (toast)
-- Forms : react-hook-form, zod
-- Utilities : clsx, tailwind-merge
-- Other : lucide-react (icons), date-fns, etc.
-
-**DevDependencies** :
-- @tailwindcss/postcss, tailwindcss (CSS framework)
-- TypeScript types (@types/node, @types/react, @types/react-dom)
-
-#### G. Interaction Frontend ↔ Backend
+#### F. Interaction Frontend ↔ Backend
 
 | Composant | Technologie | Communication |
 |-----------|-------------|---------------|
@@ -822,7 +869,6 @@ Calculer :
 | **Backend Binary (C)** | ./ordonnanceur --api | stdout JSON |
 | **Response** | JSON over HTTP | JSON.parse() → React render |
 
----
 
 ### Tableau Récapitulatif - Stack par Couche
 
@@ -852,7 +898,6 @@ Calculer :
 └─────────────────────────────────────────────────────────────┘
 ```
 
----
 
 ### Versions Exactes du Projet
 
@@ -1000,29 +1045,8 @@ Projet-Ordonnancement-Linux/
 
 **Dépôt GitHub** :
 - URL : `https://github.com/arijsebai/Projet-Ordonnancement-Linux.git`
-- Branch active : `dev`
+ - Branch active : `dev`
 - Remote : `origin`
-
-**Commandes usuelles** :
-
-```bash
-# Vérifier l'état
-git status
-
-# Valider et pousser sur la branche active (dev)
-git add -A
-git commit -m "docs: mise à jour architecture et git"
-git push origin dev
-
-# Vérifier le remote et la branche courante
-git remote -v
-git rev-parse --abbrev-ref HEAD
-```
-
-**.gitignore (extraits pertinents)** :
-- `node_modules/`, `.next/`, `build/` (artifacts Next.js et C)
-- `test_*`, `mon_test_*` (binaires de test non trackés)
-- `ordonnanceur` et `*.exe` (binaires compilés selon besoin)
 
 **Structure Logique par Rôle**
 
@@ -1060,6 +1084,65 @@ git rev-parse --abbrev-ref HEAD
         │  API Route            │
         │  Parse JSON + Return  │
         └──────────┬────────────┘
+- **Makespan** : Temps total de simulation (du premier arrivé au dernier terminé)
+
+![Tableau Statistiques](./public/screenshots/tableau.png)
+*Figure 5 : Tableau détaillé des statistiques de simulation*
+
+---
+
+#### **6. Dialog de Génération de Configuration**
+
+**Fichier** : `public/screenshots/generation-dialog.png`
+
+**Description** :
+- Formulaire de génération automatique de processus
+- Paramètres configurables :
+  - **Nombre de processus** : 1-50 (slider)
+  - **Arrival Time range** : Min-Max (0-100)
+  - **Execution Time range** : Min-Max (1-50)
+  - **Priority range** : Min-Max (1-10)
+- Boutons : Générer, Annuler
+- Génère un fichier config.txt téléchargeable
+
+![Dialog Génération](./public/screenshots/generation-dialog.png)
+*Figure 6 : Interface de génération automatique de configurations*
+
+---
+
+#### **7. Upload de Fichier Configuration**
+
+**Fichier** : `public/screenshots/upload.png`
+
+**Description** :
+- Zone de drag & drop pour fichiers `.txt`
+- Format attendu : `ProcessID ArrivalTime ExecutionTime Priority` (1 ligne par processus)
+- Validation en temps réel avec messages d'erreur explicites
+- Prévisualisation du fichier parsé avant simulation
+
+![Upload Fichier](./public/screenshots/upload.png)
+*Figure 7 : Interface d'upload et validation de fichier configuration*
+
+---
+
+**Instructions pour ajouter les captures** :
+
+1. Créer le dossier `public/screenshots/` s'il n'existe pas :
+   ```bash
+   mkdir -p public/screenshots
+   ```
+
+2. Prendre les captures d'écran de l'application en fonctionnement :
+   - Lancer l'app : `pnpm dev`
+   - Ouvrir `http://localhost:3000`
+   - Utiliser un outil de capture (Flameshot, Snipping Tool, Cmd+Shift+4 sur Mac)
+   - Format recommandé : PNG (1920x1080 ou 1440x900)
+
+3. Renommer et placer les fichiers selon les noms ci-dessus
+
+4. Les images seront automatiquement affichées dans la documentation
+
+---
                    │
         ┌──────────▼────────────────┐
         │  React Component         │
@@ -1081,21 +1164,6 @@ Le backend C (`ordonnanceur`) supporte **3 modes** :
 | **API** | `./ordonnanceur --api --config ... --algo ...` | JSON structuré | Routes Next.js |
 | **Parse Only** | `./ordonnanceur --parse-config config.txt` | JSON array | Validation fichiers |
 
-**Mode API** (utilisé par frontend) :
-```bash
-./ordonnanceur --api --config sample_config.txt --algo fifo --quantum 4 --prio-order asc
-```
-
-**Output JSON** :
-```json
-{
-  "algorithm": "fifo",
-  "ganttData": [{"process":"P1","start":0,"end":5,"duration":5}, ...],
-  "processStats": [{"id":"P1","waitTime":0,"totalTime":5, ...}, ...],
-  "averageWait": 3.45,
-  "makespan": 25
-}
-```
 
 ### 4.4 Intégration Frontend ↔ Backend
 
@@ -1121,16 +1189,6 @@ React Component (ResultsDisplay)
 1. **POST /api/parse-config** : Upload fichier `.txt` → retourne array processes
 2. **POST /api/schedule** : Lance simulation → retourne résultats complets
 
-**Mapping algorithmes** (frontend → backend) :
-
-| Frontend | Backend C |
-|----------|-----------|
-| `fifo` | `fifo` |
-| `priority_preemptive` | `priority_preemptive` |
-| `round-robin` | `round-robin` |
-| `multilevel` | `multilevel` |
-| `multilevel-dynamic` | `multilevel-dynamic` |
-| `srt` | `srt` |
 
 ### 4.5 Flow d'Exécution Complet
 
@@ -1152,26 +1210,33 @@ React Component (ResultsDisplay)
 3. **FileGenerationDialog** (`components/file-generation-dialog.tsx`)
    - Dialog création config (nb processus, ranges arrival/exec/priority)
 
+#### Captures d'écran (placeholders)
+
+Placez les fichiers suivants dans `public/` et ils seront référencés dans la documentation et le README :
+- `public/home.png` — Page d'accueil avec AlgorithmSelector et FileGenerationDialog
+- `public/gantt.png` — Vue Résultats avec diagramme de Gantt
+- `public/processus.png` — Vue Résultats avec diagramme d'état des processus
+- `public/tableau.png` — Vue Résultats avec tableau
+- `public/bar.png` — Vue Résultats avec Bar charts
+- `public/cercle.png` — Vue Résultats avec Pie charts
+
+
+Aperçu intégré :
+
+![Accueil](./public/home.png)
+
+![Gantt](./public/gantt.png)
+
+![Processus](./public/processus.png)
+
+![Tableau](./public/tableau.png)
+
+![Charts](./public/bar.png)
+
+![Pie](./public/cercle.png)
+
 ### 4.6 Mapping Algorithmes Frontend → Backend
 
-**Correspondance noms** :
-
-| Frontend (TypeScript) | Backend C (--algo) | Fichier Policy |
-|-----------------------|--------------------|----------------|
-| `fifo` | `fifo` | `policies/fifo.c` |
-| `priority_preemptive` | `priority_preemptive` | `policies/priority_preemptive.c` |
-| `round-robin` | `round-robin` | `policies/roundrobin.c` |
-| `srt` | `srt` | `policies/srt.c` |
-| `multilevel` | `multilevel` | `policies/multilevel.c` |
-| `multilevel-dynamic` | `multilevel-dynamic` | `policies/multilevel_dynamic.c` |
-
-**Paramètres** :
-- **quantum** : requis pour `round-robin` et `multilevel-dynamic`
-- **priorityOrder** : requis pour `priority_preemptive` (ascending/descending)
-- **prio_mode** : 0=ascending (petite valeur=haute), 1=descending (grande valeur=haute)
-- **Défaut CLI** : `prio_mode=1` (descending), **Défaut API** : `prio_mode=0` (ascending)
-
----
 
 ## 5. Déroulement du Développement SCRUM
 
@@ -1232,7 +1297,6 @@ React Component (ResultsDisplay)
    - Configurer .gitignore
    - Premier commit
 
----
 
 ### 5.5 Sprint Backlog 1
 
@@ -1290,7 +1354,6 @@ Le backend C (`ordonnanceur`) supporte **3 modes d'opération** :
 | **API** | `./ordonnanceur --api --config ... --algo ...` | Programme/Script | JSON structuré | Routes Next.js |
 | **Parse Only** | `./ordonnanceur --parse-config [fichier]` | Programme/Script | JSON array | Validation fichiers |
 
----
 
 #### Mode 1 : CLI Interactif (Menu Principal)
 
@@ -1424,7 +1487,6 @@ for (int i = 1; i < argc; i++) {
 
 **Avantage** : Utile pour scripts shell automatisés sans intervention utilisateur.
 
----
 
 #### Mode 3 : API Mode (Mode Programmable JSON)
 
@@ -1469,24 +1531,6 @@ for (int i = 1; i < argc; i++) {
    - Appeler `print_json_result(&result)`
    - Affiche JSON structuré sur stdout
    - API route Next.js parse ce JSON
-
-**Exemple de sortie JSON (Mode API)** :
-```json
-{
-  "algorithm": "roundrobin",
-  "ganttData": [
-    { "process": "P1", "start": 0, "end": 4 },
-    { "process": "P2", "start": 4, "end": 8 },
-    { "process": "P1", "start": 8, "end": 10 }
-  ],
-  "processStats": [
-    { "id": "P1", "arrivalTime": 0, "executionTime": 10, "finishTime": 10, "waitTime": 0 },
-    { "id": "P2", "arrivalTime": 2, "executionTime": 6, "finishTime": 8, "waitTime": 0 }
-  ],
-  "averageWait": 0,
-  "makespan": 10
-}
-```
 
 ### 6.2 Format Fichier Configuration
 
@@ -1706,230 +1750,6 @@ Pour chaque processus i de 1 à nb_processes :
 - **Validité** : Fichier généré est automatiquement **valide** (respecte toutes les règles)
 - **Sortie** : Affichage confirmation + chemin fichier
 
----
-
-### 6.4 Fichiers Headers et Structures Partagées
-
-#### Vue d'ensemble
-
-Les headers C (`include/*.h`) définissent les **interfaces** et **structures de données** partagées entre tous les modules du projet. Ils assurent la **cohérence** et la **modularité** du code.
-
-**Fichiers headers disponibles** :
-- `process.h` : Structure process, constantes d'état
-- `scheduler.h` : Prototypes simulations, structures résultats
-- `parser.h` : Prototypes parsing configuration
-- `generate_config.h` : Prototype générateur
-- `utils.h` : Utilitaires affichage
-
----
-
-#### 6.4.1 process.h : Structure Cœur
-
-**Fichier** : `include/process.h`
-
-**Contenu** :
-```c
-#ifndef PROCESS_H
-#define PROCESS_H
-
-#define NAME_LEN 64
-#define READY 0
-#define RUNNING 1
-#define BLOCKED 2
-#define ZOMBIE 3
-
-struct process {
-    char name[NAME_LEN];      // Nom processus (ex: "P1")
-    int arrival_time;         // Temps d'arrivée (≥0)
-    int exec_time;            // Durée totale requise (immuable)
-    int priority;             // Priorité statique (petite valeur = haute)
-    int remaining_time;       // Temps restant (modifiable)
-    int waiting_time;         // Temps attente cumulé
-    int status;               // État: READY(0), RUNNING(1), BLOCKED(2), ZOMBIE(3)
-    int end_time;             // Temps fin exécution (pour stats)
-    int wait_time;            // Pour aging dynamique (Multilevel)
-};
-
-#endif
-```
-
-**Rôle** :
-- **Structure centrale** utilisée par tous les modules
-- **Constantes d'état** pour machine d'état processus
-- **Convention priorité** : petite valeur = haute priorité (Unix standard)
-
----
-
-#### 6.4.2 scheduler.h : Interfaces Simulation
-
-**Fichier** : `include/scheduler.h`
-
-**Contenu** :
-```c
-#ifndef SCHEDULER_H
-#define SCHEDULER_H
-
-#include "process.h"
-
-#define MAX_SEGMENTS 2048
-
-struct gantt_segment {
-    char process[NAME_LEN];   // Nom processus
-    int start;                // Temps début allocation CPU
-    int end;                  // Temps fin allocation CPU
-};
-
-struct process_stat {
-    char id[NAME_LEN];        // Nom processus
-    int arrival_time;         // Arrivée
-    int exec_time;            // Durée exécution
-    int finish_time;          // Temps fin
-    int wait_time;            // Temps attente
-    int priority;             // Priorité initiale
-    int final_priority;       // Priorité finale (multilevel_dynamic)
-};
-
-struct simulation_result {
-    char algorithm[64];                      // Nom algorithme
-    struct gantt_segment segments[MAX_SEGMENTS];  // Timeline Gantt
-    int segment_count;                       // Nombre segments
-    struct process_stat stats[256];         // Stats processus
-    int stat_count;                         // Nombre processus
-    double average_wait;                    // Moyenne temps attente
-    int makespan;                           // Temps total simulation
-};
-
-struct scheduler_options {
-    const char *algorithm;   // Nom algorithme (fifo, priority, etc.)
-    int quantum;             // Quantum Round-Robin
-    int prio_mode;           // 1=descending, 0=ascending
-};
-
-// Prototypes
-void load_policies();
-int choose_policy();
-void run_scheduler(struct process *list, int n, int policy);
-int run_scheduler_api(struct process *list, int n, const struct scheduler_options *opts, struct simulation_result *out);
-void print_json_result(const struct simulation_result *res);
-
-// Simulations
-void fifo_simulation(struct process *p, int n);
-void priority_simulation(struct process *p, int n, int prio_mode);
-void rr_simulation(struct process *p, int n);
-void multilevel_simulation(struct process *p, int n, int quantum);
-void multilevel_dynamic_simulation(struct process *p, int n, int quantum);
-void srt_simulation(struct process *p, int n);
-
-#endif
-```
-
-**Rôle** :
-- **Structures résultats** pour mode API JSON
-- **Options ordonnancement** (algorithme, quantum, prio_mode)
-- **Prototypes simulations** pour tous les algorithmes
-- **Interface API** pour routes Next.js
-
----
-
-#### 6.4.3 parser.h : Interface Parsing
-
-**Fichier** : `include/parser.h`
-
-**Contenu** :
-```c
-#ifndef PARSER_H
-#define PARSER_H
-
-#include "process.h"
-
-// Parse fichier configuration
-int parse_config_file(const char *filename, struct process **out, int *n);
-
-// Validation format
-int validate_config_line(const char *line);
-
-#endif
-```
-
-**Rôle** :
-- **Parsing fichiers** configuration texte
-- **Validation** format (4 champs, types corrects)
-- **Allocation dynamique** tableau processus
-
----
-
-#### 6.4.4 generate_config.h : Interface Générateur
-
-**Fichier** : `include/generate_config.h`
-
-**Contenu** :
-```c
-#ifndef GENERATE_CONFIG_H
-#define GENERATE_CONFIG_H
-
-// Génère fichier config aléatoire
-int generate_config(const char *filename);
-
-#endif
-```
-
-**Rôle** :
-- **Générateur automatique** configurations
-- **Création fichiers** avec timestamp
-- **Validation automatique** (toujours valide)
-
----
-
-#### 6.4.5 utils.h : Utilitaires
-
-**Fichier** : `include/utils.h`
-
-**Contenu** :
-```c
-#ifndef UTILS_H
-#define UTILS_H
-
-// Affiche contenu fichier configuration
-void display_config_file(const char *filename);
-
-#endif
-```
-
-**Rôle** :
-- **Affichage** fichiers configuration
-- **Utilitaires** divers (logs, debug)
-
----
-
-#### Communication Headers ↔ Modules
-
-```
-main.c
- ├─ #include "process.h"        → struct process
- ├─ #include "scheduler.h"      → run_scheduler(), simulations
- ├─ #include "parser.h"         → parse_config_file()
- ├─ #include "generate_config.h" → generate_config()
- └─ #include "utils.h"          → display_config_file()
-
-scheduler.c
- ├─ #include "process.h"        → struct process
- └─ #include "scheduler.h"      → struct simulation_result
-
-policies/fifo.c
- └─ #include "process.h"        → struct process (définition)
-
-tests/test_fifo.c
- └─ #include "process.h"        → struct process pour tests
-```
-
-**Avantages** :
-- ✅ **Modularité** : chaque module inclut seulement ce dont il a besoin
-- ✅ **Cohérence** : structure `process` définie une seule fois
-- ✅ **Réutilisabilité** : headers partagés entre main, tests, policies
-- ✅ **Maintenance** : modifier `process.h` → tous les modules mis à jour
-
----
-
 ## 7. Makefile et Compilation
 
 ### 7.1 Objectif du Makefile
@@ -2076,8 +1896,6 @@ make mrproper
 # Voir étapes compilation
 make -d                 # Mode debug
 ```
-
----
 
 ## 8. Conclusion
 

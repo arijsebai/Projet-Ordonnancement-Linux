@@ -1,135 +1,244 @@
-# Linux Scheduler Simulator – Full Documentation
+# Ordonnanceur Linux - Documentation Complète
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Version](https://img.shields.io/badge/Version-1.0.0-green.svg)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)
 
-## Overview
+## 📋 Vue d'ensemble
 
-A complete simulator of process scheduling algorithms with a modern web UI (Next.js/React/TypeScript) and a C backend. You can run it from the browser or directly via CLI.
+**Ordonnanceur Linux** est un simulateur complet d'algorithmes d'ordonnancement des processus avec interface web interactive. L'application combine un moteur backend en C pour les simulations d'ordonnancement et une interface web moderne construite avec Next.js/React/TypeScript.
 
-### Key features
-- 6 scheduling algorithms: FIFO, Priority (preemptive), Round Robin, Multilevel, Multilevel Dynamic (aging), SRT
-- Interactive Gantt chart, CPU utilization graph, queue visualization, detailed per-process stats
-- Upload or auto-generate configuration files; default `sample_config.txt` preloaded
-- Play/Pause/Step controls, dark theme, responsive UI
+### ✨ Caractéristiques principales
 
-### Tech stack
-- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS, Radix UI, Recharts
-- **Backend**: C11 (GCC), CLI binary `ordonnanceur`
-- **Tooling**: pnpm, Make, Git
+- **6 Algorithmes d'ordonnancement implémentés**:
+  - FIFO (First In First Out)
+  - Priority (Ordonnancement par Priorité avec Préemption)
+  - Round Robin (RR avec Quantum configurable)
+  - Multilevel (Multilevel Feedback Queue - Statique)
+  - Multilevel Dynamic (Multilevel avec Aging Dynamique)
+  - SRT (Shortest Remaining Time)
 
-### Priority convention (important)
-- **Small value = higher priority** (Unix convention).
-- CLI default: **descending** (bigger number = higher) because `prio_mode=1` in `main.c` if you do not pass a flag.
-- API default: **ascending** (smaller number = higher) because `/api/schedule` sends `--prio-order asc`.
-- Force mode: `--prio-order asc|desc`.
+- **Visualisations avancées**:
+  - Diagramme de Gantt dynamique et interactif
+  - Graphique d'occupation CPU en temps réel
+  - Visualisation de la file d'attente avec animation
+  - Statistiques détaillées par processus
+  - Graphiques camembert et barres (Recharts)
 
-### Prerequisites
+- **Interface intuitive**:
+  - Chargement de fichiers de configuration personnalisés
+  - Génération automatique de processus
+  - Fichier par défaut (`sample_config.txt`) préchargé
+  - Contrôles de lecture (Play/Pause/Step Forward/Step Back)
+  - Thème sombre professionnel
 
-#### Linux (Debian/Ubuntu)
 
-```bash
-# Update package manager
-sudo apt update && sudo apt upgrade -y
+### 📸 Captures d'écran (placeholders)
 
-# Install build tools
-sudo apt install -y \
-  build-essential \
-  gcc \
-  make \
-  git
+Ajoutez ces fichiers sous `public/` pour illustrer l'interface :
+- `public/screenshot-home.png` — Accueil avec AlgorithmSelector + FileGenerationDialog
+- `public/screenshot-results-gantt.png` — Résultats avec diagramme de Gantt
+- `public/screenshot-results-charts.png` — Résultats avec Pie/Bar charts
+- `public/screenshot-toast-error.png` — Toast d'erreur (ex : binaire backend manquant)
 
-# Install Node.js 18+ and pnpm
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-source ~/.bashrc
-nvm install 18
-npm install -g pnpm@8
+Aperçu intégré :
+
+![Accueil](./public/screenshot-home.png)
+
+![Gantt](./public/screenshot-results-gantt.png)
+
+![Charts](./public/screenshot-results-charts.png)
+
+![Erreur](./public/screenshot-toast-error.png)
+
+
+### Stack Technologique
+
+#### Backend
+- **C (C11)** - Moteur de simulation (GCC)
+- **Linux/Unix** - Système d'exploitation cible
+
+#### Frontend
+- **Next.js 16.0.3** - Framework React full-stack
+- **React 18+** - Bibliothèque UI
+- **TypeScript** - Typage statique
+- **Tailwind CSS** - Styling utilitaire
+- **Recharts** - Bibliothèque graphiques
+- **Radix UI** - Composants accessibles
+- **Lucide Icons** - Icônes SVG
+
+#### Outils & Infrastructure
+- **pnpm** - Gestionnaire de paquets
+- **Node.js 18+** - Runtime JavaScript
+- **Make** - Build automation (C)
+- **Git** - Contrôle de version
+
+### Structure du Projet
+
+```
+ordonnanceur-linux/
+├── src/                      # Code source C
+│   ├── main.c               # Point d'entrée CLI
+│   ├── parser.c             # Parser fichiers config
+│   ├── scheduler.c          # Orchestrateur simulations
+│   └── utils.c              # Utilitaires C
+├── policies/                # Algorithmes d'ordonnancement
+│   ├── fifo.c
+│   ├── priority_preemptive.c
+│   ├── roundrobin.c
+│   ├── srt.c
+│   ├── multilevel.c
+│   └── multilevel_dynamic.c
+├── include/                 # Headers C
+│   ├── process.h           # Structure processus
+│   ├── parser.h
+│   ├── scheduler.h
+│   └── utils.h
+├── tests/                   # Tests unitaires C
+│   ├── test_fifo.c
+│   ├── test_roundrobin.c
+│   ├── test_priority.c
+│   ├── test_multilevel.c
+│   ├── test_multilevel_dynamic.c
+│   └── test_parser.c
+├── app/                     # Application Next.js
+│   ├── page.tsx            # Page principale
+│   ├── layout.tsx          # Layout global
+│   ├── globals.css         # Styles globaux
+│   └── api/
+│       ├── parse-config/   # Endpoint parsing
+│       └── schedule/       # Endpoint ordonnancement
+├── components/              # Composants React
+│   ├── results-display.tsx  # Affichage résultats (Gantt, stats)
+│   ├── algorithm-selector.tsx
+│   ├── file-generation-dialog.tsx
+│   ├── theme-provider.tsx
+│   └── ui/                 # Composants Radix UI customisés
+├── lib/                     # Utilitaires TypeScript
+│   ├── types.ts            # Types partagés
+│   └── utils.ts
+├── config/                  # Fichiers de configuration
+│   └── sample_config.txt    # Configuration par défaut
+├── public/                  # Assets statiques
+├── Makefile                 # Build C
+├── package.json             # Dependencies Node.js
+├── tsconfig.json            # Configuration TypeScript
+├── next.config.mjs          # Configuration Next.js
+└── README.md        # Cette documentation
 ```
 
-#### macOS
+---
+
+## 📦 Prérequis
+
+### Windows 10/11
+- **WSL2** (Windows Subsystem for Linux) avec Ubuntu 20.04 LTS ou plus récent
+- **Git Bash** ou **PowerShell avec WSL intégré**
+- **Node.js 18.0.0+** (64-bit)
+- **pnpm 8.0.0+**
+- **GCC 9.0+** (via apt dans WSL)
+- **Make** (via apt dans WSL)
+
+### Linux (Ubuntu/Debian)
+- **Node.js 18.0.0+**
+- **pnpm 8.0.0+**
+- **GCC 9.0+**
+- **Make**
+- **Build-essential** (compilation outils)
+
+### macOS
+- **Xcode Command Line Tools**
+- **Node.js 18.0.0+** (via Homebrew)
+- **pnpm 8.0.0+**
+- **GCC** (via Homebrew: `brew install gcc`)
+- **Make** (inclus avec Xcode CLT)
+
+---
+
+## 🚀 Installation & Configuration
+
+### Étape 1: Cloner le repository
 
 ```bash
-# Install Xcode Command Line Tools
-xcode-select --install
-
-# Install Homebrew (if not installed)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install dependencies
-brew install node@18 make git
-
-# Install pnpm
-npm install -g pnpm@8
-```
-
-#### Windows (WSL2)
-
-```bash
-# Open PowerShell as Administrator and run:
-wsl --install -d Ubuntu-22.04
-
-# Then in WSL terminal:
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y build-essential gcc make git curl
-
-# Install Node.js
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-source ~/.bashrc
-nvm install 18
-npm install -g pnpm@8
-```
-
-## Project setup
-
-```bash
-# Clone the repository
 git clone https://github.com/arijsebai/Projet-Ordonnancement-Linux.git
 cd Projet-Ordonnancement-Linux
 ```
 
-### Install Node dependencies
+### Étape 2: Installer les dépendances Node.js
+
 ```bash
-# Recommended
+# Avec pnpm (recommandé)
 pnpm install
-# Alternatively
+
+# Ou avec npm
 npm install
 ```
 
-### Build the C backend
+### Étape 3: Compiler le backend C
+
 ```bash
+# Linux/macOS/Windows (WSL)
 make clean
 make all
-# Validate binary
+
+# Vérifier la compilation
 ls -la ordonnanceur
 ```
 
-### Quick structure check
+### Étape 4: Vérifier la structure du projet
+
 ```bash
+# Linux/macOS/Windows (WSL)
 ls -la config/sample_config.txt
 cat config/sample_config.txt
 ```
 
-## Usage
+---
 
-### Mode 1: Web UI (recommended)
+## 💻 Utilisation
 
-Start dev server:
+### Mode 1: Interface Web (Recommandé)
+
+#### Démarrer l'application web
+
 ```bash
+# Développement (rechargement automatique)
 pnpm dev
-# Available at http://localhost:3000
+
+# L'app sera disponible à : http://localhost:3000
 ```
 
-What you get:
-- Default `sample_config.txt` auto-loaded
-- Generate random processes or upload your own `.txt`
-- Select algorithm (FIFO, Priority, RR, Multilevel, Multilevel Dynamic, SRT)
-- Dynamic params (quantum for RR/Multilevel Dynamic)
-- Run and visualize: live Gantt, CPU usage, queue, detailed stats (tables + charts)
+#### Interface utilisateur
 
-Config file example:
+1. **Page d'accueil** :
+   - ✅ Fichier par défaut (`sample_config.txt`) préchargé automatiquement
+   - Affichage du nombre de processus chargés
+   - Boutons pour "Générer un Fichier" ou "Choisir un Fichier"
+
+2. **Gestion des fichiers** :
+   - Générer : Crée 5-10 processus aléatoires
+   - Choisir : Uploader un fichier `.txt` personnalisé
+   - Format attendu: `name arrival execution priority` (un par ligne), des commenatires et des lignes vides. 
+
+3. **Sélection de l'algorithme** :
+   - Choisir parmi FIFO, Priority, RR, Multilevel, Multilevel Dynamic, SRT
+   - Paramètres dynamiques (ex: Quantum pour Round Robin)
+
+4. **Lancer la simulation** :
+   - Bouton "Lancer l'Ordonnancement"
+   - Visualisation en temps réel du Gantt
+
+5. **Résultats** :
+   - Diagramme de Gantt avec timeline dynamique
+   - Graphique CPU + File d'attente
+   - Tableau détaillé des statistiques
+   - Graphiques d'analyse (barres, camembert)
+
+#### Exemple de fichier de configuration
+
 ```txt
-# name arrival execution priority
+# Format: name arrival_time execution_time priority
+
 P1 0 5 1
 P2 2 3 2
 P3 4 2 1
@@ -137,39 +246,91 @@ P4 6 4 2
 P5 8 2 1
 ```
 
-### Mode 2: CLI (C backend)
+---
+
+### Mode 2: Ligne de commande (CLI - Backend pur)
+
+#### Exécutable C
 
 ```bash
-# Direct file
+# Format
+./ordonnanceur <chemin vers fichier_config.txt>
+
+# Exemple
 ./ordonnanceur config/sample_config.txt
 
-# Interactive (menu: generate or pick file, then choose algorithm)
+# Ou bien si vous pouvez générer un nouveau fichier ou enter un fichier de config
 ./ordonnanceur
 ```
 
-CLI flow:
-1) Load config file (either provided or generated)  
-2) Choose algorithm from menu (FIFO, Priority, RR, Multilevel, Multilevel Dynamic, SRT)  
-3) Enter params if needed (quantum)  
-4) Simulation prints Gantt + stats in console
+#### Flux d'exécution CLI
 
-Sample FIFO output (truncated):
+1. Charger le fichier de configuration
+2. Menu interactif pour choisir l'algorithme :
+   ```
+   Choisir un algorithme:
+   1. FIFO
+   2. Priorité (Préemption)
+   3. Round Robin
+   4. Multilevel
+   5. Multilevel Dynamic
+   6. SRT
+   ```
+3. Entrer les paramètres si nécessaire (ex: Quantum)
+4. Simulation et affichage des résultats en console
+
+#### Exemple de sortie console
+
 ```
-Time  Executing  Ready Queue
-0     P1        []
-1     P1        []
-2     P1        [P2]
-...
+═══════════════════════════════════════════════════════════════
+                   DONNÉES DE TEST FIFO
+═══════════════════════════════════════════════════════════════
+  Name     Arrival   Exec
+  ─────    ───────   ────
+  P1           0      5
+  P2           2      3
+  P3           4      2
+
+╔═════════════════════════════════════════════════════════════╗
+║            SIMULATION (TABLEAU GANTT)                       ║
+╚═════════════════════════════════════════════════════════════╝
+ Time  Executing  Ready Queue
+ ──────────────────────────────
+    0      P1        []
+    1      P1        []
+    2      P1        [P2]
+    3      P1        [P2]
+    4      P1        [P2, P3]
+    5      P2        [P3]
+    6      P2        []
+    7      P2        []
+    8      P3        []
+    9      P3        []
+
+FINAL STATISTICS
+Name  Arrival  Exec  Finish  Wait
+────────────────────────────────
+P1        0     5       5      0
+P2        2     3       8      3
+P3        4     2      10      4
+
 Average Wait Time: 2.33
 Makespan: 10
 ```
 
-## Tests
+---
 
-### C tests
+## 🧪 Tests
+
+### Tests unitaires C
+
 ```bash
+# Tester le parser
 make clean && make all
-gcc -Iinclude tests/test_fifo.c policies/fifo.c -o test_unit && ./test_unit
+./ordonnanceur config/sample_config.txt
+
+# Tester individuellement chaque algorithme
+./tests/test_fifo
 gcc -Iinclude tests/test_roundrobin.c policies/roundrobin.c -o test_unit && ./test_unit
 gcc -Iinclude tests/test_priority.c policies/priority_preemptive.c -o test_unit && ./test_unit
 gcc -Iinclude tests/test_multilevel.c policies/multilevel.c -o test_unit && ./test_unit
@@ -177,7 +338,8 @@ gcc -Iinclude tests/test_multilevel_dynamic.c policies/multilevel_dynamic.c -o t
 && ./test_unit
 ```
 
-### Web checks
+### Tests Web
+
 ```bash
 pnpm build
 pnpm start   # serve production build

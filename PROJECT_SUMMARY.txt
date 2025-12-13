@@ -54,6 +54,12 @@
 └───────────────────────────────────────────────────┘
              ↓ spawn ↓
         ./ordonnanceur
+Screenshots (placeholders):
+- Place under `public/` and reference in README/Documentation:
+  - public/screenshot-home.png
+  - public/screenshot-results-gantt.png
+  - public/screenshot-results-charts.png
+  - public/screenshot-toast-error.png
 
 
 ┌─ BACKEND (C/GCC) ──────────────────────────────┐
