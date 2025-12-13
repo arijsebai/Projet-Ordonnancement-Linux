@@ -110,73 +110,18 @@ Ce projet est un **simulateur d'ordonnancement de processus sous Linux** avec un
 - ✅ **Architecture modulaire** : ajout nouvel algorithme = 1 fichier dans `policies/`, sans modifier scheduler.c
 
 
+
 ### 1.1 Galerie UI — Captures d'Écran de l'Application Web
 
-> **📸 Galerie d'Images** : Les captures ci-dessous illustrent l'interface utilisateur complète de l'application en production.
->
-> **Localisation** : Les fichiers PNG sont stockés dans le dossier `public/` à la racine du projet.
+L'interface utilisateur complète et toutes les captures d'écran sont documentées en détail dans la section **4.5 Interface Utilisateur et Visualisations** avec les descriptions techniques des composants React correspondants.
 
-#### 1. Interface Principale
-
-**Page d'accueil de l'application**
-
-Sélecteur d'algorithmes (dropdown avec 6 options : FIFO, RR, Priority, SRT, Multilevel, Multilevel Dynamic) avec paramètres dynamiques : quantum (Round-Robin, Multilevel Dynamic), ordre de priorité (ascendant/descendant). Boutons d'action : Générer Config, Upload Fichier, Lancer Simulation. Liste des processus chargés avec détails (ID, Arrival, Execution, Priority).
-
-![Page d'accueil affichant le sélecteur d'algorithmes et les contrôles principaux](./public/home.png)
-
-#### 2. Diagramme de Gantt — Timeline d'Exécution
-
-**Diagramme de Gantt interactif**
-
-Timeline horizontale avec processus colorés par ID (palette 20 couleurs). Contrôles de lecture : Play/Pause, Step Forward, Step Backward, Reset. Zoom et navigation temporelle. Légende automatique avec correspondance couleur-processus. États visuels : Running (rempli), Waiting (hachuré), Completed (grisé).
-
-![Diagramme de Gantt interactif affichant la timeline d'exécution des processus](./public/gantt.png)
-
-#### 3. Répartition CPU — Diagramme Circulaire
-
-**Diagramme circulaire (Pie Chart)**
-
-Répartition du temps CPU par processus (pourcentages). Couleurs synchronisées avec le diagramme de Gantt. Tooltip au survol avec temps exact. Permet d'identifier rapidement les processus les plus consommateurs de ressources.
-
-![Graphique circulaire montrant la répartition du temps CPU entre les processus](./public/cercle.png)
-
-#### 4. Comparaison Statistiques — Graphique à Barres
-
-**Graphique à barres (Bar Chart)**
-
-Comparaison temps d'attente (waiting) vs temps total (turnaround) par processus. Axes : X = Process ID, Y = Time units. Deux séries de barres colorées (waiting vs total). Visualisation facile des performances par algorithme.
-
-![Graphique à barres comparant les temps d'attente et temps total pour chaque processus](./public/bar.png)
-
-#### 5. Tableau Récapitulatif — Données Détaillées
-
-**Tableau statistiques détaillées**
-
-Colonnes : Process ID, Arrival Time, Execution Time, Wait Time, Finish Time, Priority, Turnaround. Métriques globales : Average Wait Time, Makespan, CPU Utilization. Tri par colonnes (cliquable). Export possible (copy/paste vers Excel).
-
-![Tableau détaillé des statistiques d'exécution pour tous les processus](./public/tableau.png)
-
-#### 6. Génération Automatique — Configuration
-
-**Dialog de génération automatique de configuration**
-
-Paramètres : Nombre de processus (1-50). Plages configurables : Arrival Time (min/max), Execution Time (min/max), Priority (min/max). Génération aléatoire avec prévisualisation du fichier `.txt`. Bouton téléchargement direct pour intégration rapide.
-
-![Dialog de génération automatique de fichier de configuration](./public/gen-fichier.png)
-
-#### 7. Upload et Validation — Fichier Configuration
-
-**Zone d'upload et validation de fichier**
-
-Drag & drop ou sélection fichier `.txt`. Validation en temps réel de la syntaxe. Aperçu des processus parsés en tableau. Messages d'erreur détaillés si format invalide. Bouton confirmation pour charger la configuration dans l'application.
-
-![Interface d'upload avec drag & drop et validation de fichier de configuration](./public/fichier.png)
-
-## 2. Choix des Structures de Données
-
-### 2.1 Justification des Structures Principales
-
-#### Structure `process` : Le Cœur du Système
+➜ Voir section [4.5 Interface Utilisateur et Visualisations](#45-interface-utilisateur-et-visualisations) pour :
+- 🏠 Interface principale et sélection d'algorithmes
+- 📊 Diagramme de Gantt interactif
+- 🔄 Diagramme d'état des processus
+- 📉 Graphiques statistiques (Pie Chart, Bar Chart)
+- 📋 Tableau récapitulatif complet
+- ⚙️ Génération et upload de fichiers de configuration
 
 ```c
 #define NAME_LEN 64
@@ -846,7 +791,6 @@ Calculer :
 
 | Technologie | Rôle | Détails |
 |-------------|------|---------|
-| **Docker** (optionnel) | Containerisation | Reproductibilité environnement |
 | **Linux/WSL2** | OS cible | Ubuntu 20.04 sur WSL/VM |
 | **Port 3000** | Next.js dev server | http://localhost:3000 |
 | **Child Process Spawn** | Backend invocation | Node.js exécute `./ordonnanceur --api` |
@@ -860,34 +804,6 @@ Calculer :
 | **Backend Binary (C)** | ./ordonnanceur --api | stdout JSON |
 | **Response** | JSON over HTTP | JSON.parse() → React render |
 
-
-### Tableau Récapitulatif - Stack par Couche
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ FRONTEND (Web Browser)                                      │
-│ Next.js 16 + React 19 + TypeScript + Tailwind + Radix UI  │
-│ ├─ UI : components/algorithm-selector, results-display    │
-│ ├─ Visualization : recharts (Gantt, Pie, Bar charts)      │
-│ └─ HTTP Client : fetch → POST /api/schedule               │
-└─────────────────────────────────────────────────────────────┘
-                           ↓ HTTP (JSON)
-┌─────────────────────────────────────────────────────────────┐
-│ API ROUTES (Node.js Runtime)                                │
-│ app/api/schedule/route.ts + parse-config/route.ts          │
-│ ├─ Middleware : request validation, temp file creation     │
-│ ├─ Process spawn : ./ordonnanceur --api --config ... --algo │
-│ └─ Response : JSON parsing + cleanup                       │
-└─────────────────────────────────────────────────────────────┘
-                           ↓ child_process.spawn()
-┌─────────────────────────────────────────────────────────────┐
-│ BACKEND (C Binary)                                          │
-│ ./ordonnanceur (GCC compiled, C11 standard)                 │
-│ ├─ Parser : parse_config_file() → struct process[]        │
-│ ├─ Scheduler : simulation engines (6 algorithms)           │
-│ └─ Output : JSON to stdout (ganttData, processStats, etc.) │
-└─────────────────────────────────────────────────────────────┘
-```
 
 
 ### Versions Exactes du Projet
@@ -984,16 +900,6 @@ Projet-Ordonnancement-Linux/
   └── LICENSE                # MIT
 ```
 
-**Métadonnées Dépôt GitHub** :
-
-| Propriété | Valeur |
-|-----------|--------|
-| **URL** | `github.com/arijsebai/Projet-Ordonnancement-Linux` |
-| **Owner** | `arijsebai` |
-| **Branch actif** | `dev` |
-| **Licence** | MIT |
-| **Package** | `my-v0-project` v0.1.0 |
-| **Binaires** | `ordonnanceur` (Linux), `ordonnanceur.exe` (Windows) |
 
 **Structure Logique par Rôle**
 
@@ -1085,27 +991,135 @@ React Component (ResultsDisplay)
 
 ### 4.5 Flow d'Exécution Complet
 
-### 4.5 Visualisations Frontend
+### 4.5 Interface Utilisateur et Visualisations
 
-**Components React** :
+L'application web offre une interface moderne et interactive pour simuler et visualiser l'ordonnancement des processus. Cette section présente les composants React et leurs captures d'écran respectives.
 
-1. **AlgorithmSelector** (`components/algorithm-selector.tsx`)
-   - Dropdown 6 algorithmes
-   - Paramètres dynamiques : quantum (RR, Multilevel Dynamic), priorityOrder (Priority)
+#### 4.5.1 Interface Principale — Sélection et Configuration
 
-2. **ResultsDisplay** (`components/results-display.tsx`)
-   - **Gantt chart** : timeline interactif (play/pause, step, zoom)
-   - **Pie chart** : répartition CPU par processus
-   - **Bar chart** : temps attente vs temps total
-   - **Table** : stats détaillées (arrival, execution, wait, finish, priority)
-   - **Couleurs** : 20 couleurs distinctes, déterministe par process ID
+**Component** : Page principale (`app/page.tsx`) + **AlgorithmSelector** (`components/algorithm-selector.tsx`)
 
-3. **FileGenerationDialog** (`components/file-generation-dialog.tsx`)
-   - Dialog création config (nb processus, ranges arrival/exec/priority)
-   - Prévisualisation avant téléchargement
-   - Génération aléatoire avec paramètres
+**Fonctionnalités** :
+- Sélecteur d'algorithmes (dropdown avec 6 options : FIFO, RR, Priority, SRT, Multilevel, Multilevel Dynamic)
+- Paramètres dynamiques : quantum (Round-Robin, Multilevel Dynamic), ordre de priorité (ascendant/descendant)
+- Boutons d'action : Générer un fichier, Choisir un Fichier, Lancer l'Ordonnancement
+- Liste des processus chargés avec détails (ID, Arrival, Execution, Priority)
 
-> ⚠️ **Note** : Les captures d'écran de l'interface utilisateur sont documentées dans la **section 1.1** (Galerie UI) avec les vrais fichiers d'écran actuels.
+![Page d'accueil affichant le sélecteur d'algorithmes et les contrôles principaux](./public/home.png)
+
+*Figure 4.1 : Interface principale avec sélection d'algorithme et gestion des processus*
+
+#### 4.5.2 Visualisation Gantt — Timeline d'Exécution Interactive
+
+**Component** : **ResultsDisplay** (`components/results-display.tsx`) — Module Gantt Chart
+
+**Fonctionnalités** :
+- Timeline interactif avec contrôles (play/pause, step forward/backward, reset, zoom)
+- Axe horizontal : temps (0 à durée totale de simulation)
+- Lignes des processus : chaque processus avec couleur distinctive (palette 20 couleurs)
+- Blocs d'exécution : barres colorées proportionnelles à la durée
+- Zones d'attente (A) : segments clairs représentant l'état READY
+- Indicateur temps courant (T = Xs) avec barre de progression
+
+**Avantages pédagogiques** :
+- Visualiser l'ordre exact d'exécution selon l'algorithme sélectionné
+- Observer les effets de préemption et context switching
+- Analyser l'efficacité de chaque politique d'ordonnancement
+- Replay pas à pas pour comprendre chaque transition
+
+![Diagramme de Gantt interactif affichant la timeline d'exécution des processus](./public/gantt.png)
+
+*Figure 4.2 : Diagramme de Gantt avec contrôles interactifs et légende d'états*
+
+#### 4.5.3 Diagramme d'État des Processus
+
+**Component** : **ResultsDisplay** — Module Process State Diagram
+
+**Fonctionnalités** :
+- Visualisation temporelle de l'état des processus (exécution ou attente)
+- Représentation des transitions d'état : READY → RUNNING → TERMINATED
+- Synchronisation avec le diagramme de Gantt
+- Couleurs cohérentes pour chaque processus
+
+![Diagramme interactif affichant l'état des processus](./public/processus.png)
+
+*Figure 4.3 : Suivi des états des processus au fil du temps*
+
+#### 4.5.4 Répartition CPU — Diagramme Circulaire
+
+**Component** : **ResultsDisplay** — Module Pie Chart
+
+**Fonctionnalités** :
+- Répartition du temps CPU par processus (pourcentages)
+- Couleurs synchronisées avec le diagramme de Gantt
+- Tooltip interactif au survol avec temps exact
+- Identification rapide des processus consommateurs de ressources
+
+![Graphique circulaire montrant la répartition du temps CPU entre les processus](./public/cercle.png)
+
+*Figure 4.4 : Analyse de la répartition du temps CPU par processus*
+
+#### 4.5.5 Comparaison Statistiques — Graphique à Barres
+
+**Component** : **ResultsDisplay** — Module Bar Chart
+
+**Fonctionnalités** :
+- Comparaison temps d'attente (waiting time) vs temps total (turnaround time)
+- Axes : X = Process ID, Y = Time units
+- Deux séries de barres colorées distinctes
+- Visualisation facile des performances par algorithme
+
+![Graphique à barres comparant les temps d'attente et temps total pour chaque processus](./public/bar.png)
+
+*Figure 4.5 : Comparaison graphique des métriques de performance*
+
+#### 4.5.6 Tableau Récapitulatif — Données Détaillées
+
+**Component** : **ResultsDisplay** — Module Data Table
+
+**Fonctionnalités** :
+- Colonnes : Process ID, Arrival Time, Execution Time, Priority, Wait Time, Finish Time, Turnaround Time
+- Pour Multilevel Dynamic : affichage de la priorité finale
+- Métriques globales : Average Wait Time, Makespan, CPU Utilization
+- Tri par colonnes (cliquable)
+- Export possible (copy/paste vers Excel)
+
+![Tableau détaillé des statistiques d'exécution pour tous les processus](./public/tableau.png)
+
+*Figure 4.6 : Tableau statistiques avec toutes les métriques de performance*
+
+#### 4.5.7 Génération Automatique — Configuration
+
+**Component** : **FileGenerationDialog** (`components/file-generation-dialog.tsx`)
+
+**Fonctionnalités** :
+- Dialog de création automatique de fichier de configuration
+- Paramètres configurables :
+  - Nombre de processus (1-50)
+  - Temps d'arrivée max
+  - Temps d'exécution max
+  - Priorité (min/max)
+- Génération aléatoire avec prévisualisation du fichier `.txt`
+- Bouton téléchargement direct pour intégration rapide
+
+![Dialog de génération automatique de fichier de configuration](./public/gen-fichier.png)
+
+*Figure 4.7 : Interface de génération automatique de configurations*
+
+#### 4.5.8 Upload et Validation — Fichier Configuration
+
+**Component** : Upload Zone (intégré dans page principale)
+
+**Fonctionnalités** :
+- Drag & drop ou sélection fichier `.txt`
+- Validation en temps réel de la syntaxe
+- Aperçu des processus parsés en tableau
+- Messages d'erreur détaillés si format invalide
+- Bouton confirmation pour charger la configuration dans l'application
+
+![Interface d'upload avec drag & drop et validation de fichier de configuration](./public/fichier.png)
+
+*Figure 4.8 : Zone d'upload avec validation et aperçu des processus*
 
 
 ### 4.6 Mapping Algorithmes Frontend → Backend
@@ -1226,184 +1240,6 @@ Le backend C (`ordonnanceur`) supporte **3 modes d'opération** :
 | **Direct File** | `./ordonnanceur [fichier]` | Humain | Texte + Gantt textuel | Script shell rapide |
 | **API** | `./ordonnanceur --api --config ... --algo ...` | Programme/Script | JSON structuré | Routes Next.js |
 | **Parse Only** | `./ordonnanceur --parse-config [fichier]` | Programme/Script | JSON array | Validation fichiers |
-
-
-#### Mode 1 : CLI Interactif (Menu Principal)
-
-#### Étapes du Programme Principal (Mode Interactif)
-
-**Étape 0 : Détection du Mode d'Opération**
-
-À la première ligne de `main()` :
-- **Si aucun argument** (`argc == 1`) → Mode Interactif (menu)
-- **Si un argument non-flag** (`argc == 2` et `argv[1][0] != '-'`) → Mode Direct File (fichier passé directement)
-- **Si flags détectés** (`--api`, `--parse-config`, `--config`) → Mode API (sortie JSON)
-
-```c
-if (argc == 2 && argv[1][0] != '-') {
-    direct_file_mode = 1;  // Mode: ./ordonnanceur config.txt
-    strncpy(filename, argv[1], sizeof(filename) - 1);
-}
-```
-
-Ensuite, parcourir tous les arguments pour capturer les flags API :
-```c
-for (int i = 1; i < argc; i++) {
-    if (strcmp(argv[i], "--api") == 0) { api_mode = 1; }
-    else if (strcmp(argv[i], "--parse-config") == 0) { parse_only = 1; }
-    else if (strcmp(argv[i], "--config") == 0) { /* read filename */ }
-    else if (strcmp(argv[i], "--algo") == 0) { /* read algo name */ }
-    else if (strcmp(argv[i], "--quantum") == 0) { /* read quantum */ }
-    else if (strcmp(argv[i], "--prio-order") == 0) { /* read asc|desc */ }
-}
-```
-
-**Étape 1 : Affichage du Menu Interactif**
-
-- Afficher le titre : `=== Scheduler Project ===`
-- Afficher les deux options :
-  - Option 1 : "Generate configuration file automatically (default)"
-  - Option 2 : "Use an existing configuration file"
-- Demander le choix de l'utilisateur : `Your choice (press ENTER for default): `
-- Utiliser `fgets()` pour lire l'entrée (sûr contre débordement de buffer)
-- **Validation** :
-  - Si entrée vide (juste ENTER) → choix par défaut = 1
-  - Si entrée = "1" ou "2" → utiliser ce choix
-  - Sinon → avertissement et défaut = 1
-
-**Étape 2 : Gestion du Choix 1 (Générer Configuration)**
-
-- Récupérer timestamp système :
-  - Appeler `time(NULL)` pour obtenir temps actuel
-  - Appeler `localtime()` pour convertir en structure `tm`
-  - Utiliser `strftime(format, ...)` avec pattern `"%Y%m%d_%H%M%S"` (ex: `20251206_143022`)
-
-- Construire le chemin complet :
-  - Format : `"config/sample_config_TIMESTAMP.txt"`
-  - Exemple : `config/sample_config_20251206_143022.txt`
-  - Utiliser `snprintf()` pour formater de manière sûre
-
-- Appeler `generate_config(filename)` :
-  - Passe le chemin au générateur
-  - Si retourne 0 → succès
-  - Si retourne erreur → afficher message d'erreur et quitter (return 1)
-
-**Étape 3 : Gestion du Choix 2 (Charger Fichier Existant)**
-
-- Demander : `Enter configuration file name (with path if needed): `
-- Lire le nom du fichier avec `scanf("%255s", filename)` :
-  - Limite : 255 caractères (sécurité buffer)
-  - Accepte chemins avec sous-répertoires (ex: `config/sample_config.txt`)
-
-- **Nettoyage du buffer stdin** :
-  - Après `scanf()`, le caractère newline reste dans le buffer
-  - Boucle de nettoyage : `while ((c = getchar()) != '\n' && c != EOF);`
-  - Essentiel avant utilisation de `fgets()` ultérieurement
-
-**Étape 4 : Affichage du Fichier de Configuration**
-
-- Afficher message : `Loading configuration file: <filename>`
-- Appeler `display_config_file(filename)` pour afficher le contenu brut du fichier
-- Permet à l'utilisateur de vérifier avant parsing
-
-**Étape 5 : Parsing et Chargement des Processus**
-
-- Allouer un pointeur : `struct process *list = NULL`
-- Initialiser compteur : `int n = 0`
-- Appeler `parse_config_file(filename, &list, &n)` :
-  - Remplit le tableau `list` avec les processus trouvés
-  - Remplit `n` avec le nombre de processus chargés
-  - Retourne 0 si succès, erreur sinon
-- Si erreur (return != 0) :
-  - Afficher message d'erreur
-  - Quitter (return 1)
-
-- Afficher succès : `✔ N processes loaded.`
-
-**Étape 6 : Chargement des Politiques d'Ordonnancement**
-
-- Appeler `load_policies()` :
-  - Initialise la liste des politiques disponibles
-  - Enregistre les fonctions de sélection (FIFO, Priority, RR, SRT, Multilevel, etc.)
-
-**Étape 7 : Menu de Sélection de Politique**
-
-- Appeler `choose_policy()` :
-  - Affiche les politiques disponibles avec numéros
-  - Demande à l'utilisateur de choisir
-  - Retourne l'indice de la politique choisie
-
-**Étape 8 : Lancer la Simulation**
-
-- Appeler `run_scheduler(list, n, policy)` :
-  - Lance la simulation avec les processus et la politique choisis
-  - Orchestre la boucle temps dans `scheduler.c`
-  - Affiche les résultats (tableau, statistiques, Gantt)
-
-**Étape 9 : Libération Mémoire et Terminaison**
-
-- Appeler `free(list)` pour libérer le tableau de processus
-- Retourner 0 (succès)
-
----
-
-#### Mode 2 : Direct File Mode (Fichier en Arguments)
-
-**Comportement** : `./ordonnanceur config/sample_config.txt`
-
-**Différence avec Mode Interactif** :
-- Saute le menu initial
-- Charge directement le fichier fourni en argument
-- Affiche le contenu du fichier
-- Affiche le menu de sélection de politique
-- Exécute la simulation et affiche résultats (texte + Gantt)
-
-**Avantage** : Utile pour scripts shell automatisés sans intervention utilisateur.
-
-
-#### Mode 3 : API Mode (Mode Programmable JSON)
-
-**Comportement** : `./ordonnanceur --api --config <file> --algo <algo> [--quantum <q>] [--prio-order <asc|desc>]`
-
-**Ou en cas de Parse Only** : `./ordonnanceur --parse-config <file>`
-
-**Différence avec Modes Interactifs** :
-- Aucune interaction utilisateur
-- Sortie **UNIQUEMENT** JSON structuré sur stdout
-- Pas d'affichage de menu, pas de Gantt textuel
-- Erreurs en JSON format (pour faciliter parsing)
-- Conçu pour appels programmatiques
-
-**Étapes Internes (Mode API)** :
-
-1. **Parsing des flags** (déjà fait à Étape 0)
-2. **Vérification si parse_only** :
-   - Si oui : parser le fichier → retourner JSON array des processus → terminer
-   - Si non : continuer au scheduler
-3. **Vérification si api_mode** :
-   - Si non : mode interactif classique
-   - Si oui : continuer mode API
-4. **Chargement de la configuration** :
-   - Appeler `parse_config_file(config_path, &list, &n)`
-   - Si erreur : `printf("{\"error\":\"Failed to parse config\"}\n")`
-5. **Création de la structure d'options** :
-   ```c
-   struct scheduler_options opts = {
-       .algorithm = algo,        // "fifo", "priority", "roundrobin", etc.
-       .quantum = quantum,       // pour RR et multilevel_dynamic
-       .prio_mode = prio_mode    // 0 = asc, 1 = desc
-   };
-   ```
-6. **Appel au scheduler mode API** :
-   - Appeler `run_scheduler_api(list, n, &opts, &result)`
-   - Cette fonction remplit `result` avec :
-     - `gantt_segment[]` : allocation CPU par temps
-     - `process_stat[]` : statistiques par processus
-     - `average_wait`, `makespan` : métriques globales
-7. **Sortie JSON** :
-   - Appeler `print_json_result(&result)`
-   - Affiche JSON structuré sur stdout
-   - API route Next.js parse ce JSON
 
 ### 6.2 Format Fichier Configuration
 
