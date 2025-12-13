@@ -33,25 +33,6 @@
   - Thème sombre professionnel
 
 
-### 📸 Captures d'écran (placeholders)
-
-Ajoutez ces fichiers sous `public/` pour illustrer l'interface :
-- `public/screenshot-home.png` — Accueil avec AlgorithmSelector + FileGenerationDialog
-- `public/screenshot-results-gantt.png` — Résultats avec diagramme de Gantt
-- `public/screenshot-results-charts.png` — Résultats avec Pie/Bar charts
-- `public/screenshot-toast-error.png` — Toast d'erreur (ex : binaire backend manquant)
-
-Aperçu intégré :
-
-![Accueil](./public/screenshot-home.png)
-
-![Gantt](./public/screenshot-results-gantt.png)
-
-![Charts](./public/screenshot-results-charts.png)
-
-![Erreur](./public/screenshot-toast-error.png)
-
-
 ### Stack Technologique
 
 #### Backend
