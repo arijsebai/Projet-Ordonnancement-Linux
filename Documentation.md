@@ -38,30 +38,6 @@
 
 <div style="page-break-after: always;"></div>
 
-## ⚠️ CONVENTION IMPORTANTE : Priorités
-
-**La convention de priorité utilisée dans ce projet est la convention UNIX** :
-
-$$\text{Petite Valeur} > \text{Grande Valeur}$$
-
-Exemples :
-- Priority 0 > Priority 1 > Priority 5 > Priority 10
-- Un processus avec `priority = 0` a PLUS de priorité qu'un avec `priority = 5`
-
-**Mode Ascending** (défaut) : Applique cette convention Unix
-- Utilisé automatiquement pour tous les algorithmes de priorité
-- Peut être explicité via `--prio-order asc` en mode API
-
-**Mode Descending** (optionnel) : Inverse la convention
-- Grande valeur = haute priorité (moins intuitif pour Unix)
-- Activable via `--prio-order desc` en mode API
-
-⚠️ **Ne pas confondre** avec le mode "aging" ou "dynamique" :
-- **Ascending/Descending** = convention de comparaison des valeurs
-- **Statique/Dynamique** = changement de priorité avec le temps
-
-<div style="page-break-after: always;"></div>
-
 <div align="center">
 
 ## Table des Matières
@@ -107,7 +83,6 @@ Exemples :
    - 6.2 Format Fichier Configuration
    - 6.3 Générateur Configuration Automatique
    - 6.4 Fichiers Headers et Structures Partagées
-
 ### **7. Makefile et Compilation** .................................. [Page 27](#7-makefile-et-compilation)
    - 7.1 Objectif du Makefile
    - 7.2 Variables Principales
@@ -127,19 +102,21 @@ Exemples :
 
 ### Objectif du Projet
 
-Ce projet vise à concevoir et réaliser un **simulateur d'ordonnancement de processus sous Linux** en langage C. L'objectif est d'offrir un outil pédagogique permettant de :
+Ce projet est un **simulateur d'ordonnancement de processus sous Linux** avec une architecture hybride moderne : **Frontend Next.js 16/React 19 + Backend C**.
 
-- ✅ **Générer ou lire** un jeu de processus (fichier texte configurable)
-- ✅ **Appliquer plusieurs politiques** d'ordonnancement :
-  - FIFO (First-In First-Out)
-  - Round-Robin avec quantum configurable
-  - Priorité préemptive (modes croissant/décroissant)
-  - SRT (Shortest Remaining Time)
-  - Multilevel Queue (statique)
-  - Multilevel Dynamic (avec aging anti-famine)
-- ✅ **Collecter des métriques** : temps d'attente, temps de réponse, temps de tour, utilisation CPU
-- ✅ **Afficher les résultats** : console et diagramme de Gantt
-- ✅ **Être modulaire, configurable et extensible**
+**Capacités principales** :
+
+- ✅ **6 algorithmes d'ordonnancement** : FIFO, Round-Robin, Priorité préemptive, SRT, Multilevel statique, Multilevel Dynamic (anti-famine)
+- ✅ **Interface Web interactive** : sélection algorithme, paramètres dynamiques (quantum, ordre priorité), visualisations temps réel
+- ✅ **Backend C performant** : moteur de simulation compilé, modes CLI interactif et API JSON
+- ✅ **Visualisations riches** : Gantt chart interactif (play/pause/zoom), graphiques (pie/bar charts), tableau détaillé avec métriques
+- ✅ **Générateur automatique** : création fichiers configuration aléatoires
+- ✅ **Métriques complètes** : temps d'attente, temps total, finish time, makespan, CPU utilization
+- ✅ **Architecture modulaire** : ajout nouvel algorithme = 1 fichier dans `policies/`, sans modifier scheduler.c
+
+**Technologies** : Next.js 16, React 19, TypeScript, Tailwind CSS, Radix UI, Recharts (frontend) + C11/GCC, Make (backend)
+
+**Dépôt Git** : [github.com/arijsebai/Projet-Ordonnancement-Linux](https://github.com/arijsebai/Projet-Ordonnancement-Linux) (branch: `dev`)
 
 ## 2. Choix des Structures de Données
 
@@ -166,20 +143,6 @@ struct process {
     int wait_time;              // Pour aging dynamique (Multilevel)
 };
 ```
-
-#### Justification de Chaque Champ
-
-| Champ | Justification | Algorithmes Utilisateurs |
-|-------|--------------|------------------------|
-| `name[64]` | Identification lisible (P1, ProcessA, etc.) | Tous (affichage) |
-| `arrival_time` | Détermine quand le processus devient READY | FIFO, Priority, RR, Multilevel |
-| `exec_time` | Durée immuable totale | Métriques (calcul temps attente) |
-| `priority` | Support ordonnancement hiérarchique (**Petite valeur = haute priorité**, convention Unix) | Priority, Multilevel |
-| `remaining_time` | Temps à exécuter (modifiable) | SRT, Priority, RR, Multilevel |
-| `waiting_time` | Métrique cumulative d'attente | Métriques finales |
-| `status` | Gestion des états (READY, RUNNING, ZOMBIE) | Tous les ordonnanceurs |
-| `end_time` | Date de fin (pour turnaround time) | Métriques (calcul efficacité) |
-| `wait_time` | Temps d'attente pour aging dynamique | Multilevel Dynamic (anti-famine) |
 
 
 ### 2.2 Représentation des Données : Tableau Dynamique
@@ -302,14 +265,8 @@ Cette fonction est responsable de trouver quel processus exécuter.
 À chaque instant, le processus le **plus prioritaire** **préempte immédiatement** tout processus en cours d'exécution.
 
 **⚠️ Convention de Priorité** :
-- **Mode Ascending (petite valeur = haute priorité)** — convention Unix.
-- **Mode Descending (grande valeur = haute priorité)** — optionnel.
-
-**Valeur par défaut selon le mode d'exécution :**
-- **CLI interactif** (`./ordonnanceur`) → **Descending** (valeur + grande = + prioritaire) car `prio_mode = 1` par défaut dans `main.c`.
-- **API Next.js** (`/api/schedule`) → **Ascending** (valeur + petite = + prioritaire) car la route passe `--prio-order asc`.
-
-Vous pouvez forcer le mode en CLI avec `--prio-order asc|desc`.
+- **Mode Ascending (petite valeur = haute priorité)** 
+- **Mode Descending (grande valeur = haute priorité)** 
 
 #### Algorithme de Sélection et Simulation
 
@@ -363,13 +320,6 @@ Cette fonction permet de choisir le prochain processus à exécuter à chaque un
 **Étape 3 : Générer les résultats finaux**
 
 À la fin de la simulation, générer le diagramme de Gantt et les statistiques à partir de l'historique d'exécution.
-
-#### Modes de Priorité
-
-| Mode | Valeur Haute Priorité | Exemple | Notes |
-|------|----------------------|---------|-------|
-| **Ascending** (défaut) | Valeur petite | 0 > 1 > 5 > 10 | ✓ Convention Unix standard |
-| **Descending** (variante) | Valeur grande | 10 > 5 > 1 > 0 | Utilisable via --prio-order desc |
 
 #### Avantages et Inconvénients
 
@@ -509,8 +459,6 @@ Pour chaque processus (après terminaison de tous) :
 |--------|-----------|
 | ✅ **ÉQUITÉ MAXIMALE** ✅ | Aucun processus attend indéfiniment |
 | ✅ **Pas de famine** | Tous progressent |
-| ✅ **Très réactif** | Pas de monopole CPU |
-| ✅ **Standard moderne** | Utilisé partout (Linux, Windows) |
 | ✅ **Idéal pour interactif** | Bonne expérience utilisateur |
 | ❌ Overhead modéré | Context switches nombreux |
 | ❌ Quantum à tuner | Pas optimal pour tout workload |
@@ -524,8 +472,6 @@ Pour chaque processus (après terminaison de tous) :
 #### Principe
 
 Ordonnancement **préemptif** basé sur le **temps restant le plus court**. À chaque unité de temps, le processus avec le `remaining_time` minimum s'exécute. Si un processus plus court arrive, il **préempte immédiatement** le processus en cours.
-
-**Théoriquement optimal** pour minimiser le temps d'attente moyen.
 
 #### Algorithme de Sélection et Simulation
 
@@ -598,14 +544,10 @@ Pour chaque processus :
 
 | Aspect | Évaluation |
 |--------|-----------|
-| ✅ **OPTIMAL mathématiquement** ✅ | Meilleur temps d'attente théorique |
 | ✅ Temps attente très bon | Résultats excellents |
 | ✅ Peu de préemptions | Comparé à Priority |
-| ✅ Utile comme benchmark | Référence de comparaison |
 | ❌ **FAMINE des longs processus** ⚠️ | Processus long jamais sélectionné |
-| ❌ **REQUIERT FUTUR** | exec_time doit être connu à l'avance |
 | ❌ Irréaliste en pratique | Pas possible en vrai système d'exploitation |
-| ⚠️ Utilisé pour benchmark | Comparer autres algos contre SRT |
 
 #### Cas d'Usage Réel
 
@@ -675,12 +617,10 @@ Si aucun candidat trouvé → **Retourner -1**
 
 | Aspect | Évaluation |
 |--------|-----------|
-| ✅ Différencie types processus | Traitement adapté |
 | ✅ Priorités fixes = déterministe | Comportement prévisible |
 | ✅ Bon pour systèmes mixtes | Interactif + batch |
 | ❌ **FAMINE des basses priorités** ⚠️ | Prio 2 peut attendre indéfiniment |
 | ❌ Rigide | Pas d'adaptation aux changements |
-| ❌ Pas équitable | Basse prio jamais s'exécute si haute prio active |
 
 #### Cas d'Usage Réel
 
@@ -792,21 +732,6 @@ Calculer :
 - Average Wait Time
 - Makespan
 
-#### Différence avec Multilevel Static
-
-| Aspect | Multilevel Static | Multilevel Dynamic |
-|--------|-------------------|-------------------|
-| **Priorités** | Fixes toute la simulation | Augmentent pendant l'attente |
-| **Famine** | ❌ Possible (basse priorité bloquée) | ✅ Impossible (aging garantit progression) |
-| **Complexité** | Simple | Modérée (aging à gérer) |
-| **Équité** | Faible | Élevée |
-| **Déterminisme** | Complet | Réduit (priorités changent) |
-| **Usage réel** | Systèmes anciens | Systèmes modernes |
-
-#### Avantages et Inconvénients
-
-**Conséquence** : Aucun processus n'attendra **indéfiniment** → ✅ Anti-famine garanti
-
 #### Avantages et Inconvénients
 
 | Aspect | Évaluation |
@@ -838,110 +763,119 @@ Calculer :
 **Architecture Hybride : Next.js (Frontend) + C (Backend)**
 
 ```
-Projet-Ordonnancement-Linux-arij-dev/
+Projet-Ordonnancement-Linux/
 │
-├─── FRONTEND (Next.js 16 + React 19)
+├─── FRONTEND (Next.js 16 + React 19 + TypeScript)
 │    │
 │    ├── app/                           # Next.js App Router
-│    │   ├── page.tsx                   # Page principale (UI)
-│    │   ├── layout.tsx                 # Layout racine
-│    │   ├── globals.css                # Styles globaux
-│    │   └── api/                       # API Routes (Node.js backend)
-│    │       ├── schedule/route.ts      # Endpoint: POST /api/schedule
-│    │       └── parse-config/route.ts  # Endpoint: POST /api/parse-config
+│    │   ├── page.tsx                   # Page principale UI (upload/generate config, select algo, launch)
+│    │   ├── layout.tsx                 # Layout racine (metadata, ThemeProvider)
+│    │   ├── globals.css                # Styles Tailwind globaux
+│    │   └── api/                       # API Routes Next.js (Node.js runtime)
+│    │       ├── schedule/
+│    │       │   └── route.ts           # POST /api/schedule → lance ordonnanceur --api
+│    │       └── parse-config/
+│    │           └── route.ts           # POST /api/parse-config → parse fichier config
 │    │
 │    ├── components/                    # React Components
-│    │   ├── algorithm-selector.tsx     # Sélecteur algorithme (dropdown)
-│    │   ├── file-generation-dialog.tsx # Dialog génération fichier
-│    │   ├── results-display.tsx        # Affichage Gantt + Charts + Table
-│    │   ├── theme-provider.tsx         # Thème UI (dark/light)
-│    │   └── ui/                        # Components Radix UI (réutilisables)
-│    │       ├── button.tsx, card.tsx, dialog.tsx, input.tsx, etc.
+│    │   ├── algorithm-selector.tsx     # Dropdown algorithmes + params (quantum, priorityOrder)
+│    │   ├── file-generation-dialog.tsx # Dialog génération config (nb processus, ranges)
+│    │   ├── results-display.tsx        # Gantt interactif + Pie/Bar charts + Table stats
+│    │   ├── theme-provider.tsx         # Dark/Light theme (next-themes)
+│    │   └── ui/                        # Radix UI primitives (button, card, dialog, tabs, etc.)
 │    │
-│    ├── lib/                           # Utilitaires Frontend
-│    │   ├── types.ts                   # Interfaces TypeScript (Process, AlgorithmConfig, SchedulingResult)
-│    │   └── utils.ts                   # Fonctions utilitaires
+│    ├── lib/                           # Utilitaires TypeScript
+│    │   ├── types.ts                   # Interfaces (Process, AlgorithmConfig, SchedulingResult, etc.)
+│    │   └── utils.ts                   # Helpers (cn pour classnames)
 │    │
 │    ├── hooks/                         # Hooks React personnalisés
-│    │   ├── use-toast.ts               # Notifications
-│    │   └── use-mobile.ts              # Détection responsive
+│    │   ├── use-toast.ts               # Toast notifications (sonner)
+│    │   └── use-mobile.ts              # Responsive breakpoint detection
 │    │
-│    ├── styles/                        # Feuilles de styles
+│    ├── styles/                        # CSS additionnels
+│    │   └── globals.css                # Lien symbolique vers app/globals.css
 │    │
-│    ├── public/                        # Assets statiques
+│    ├── public/                        # Assets statiques (images, fonts, etc.)
 │    │
-│    ├── tsconfig.json                  # Configuration TypeScript
-│    ├── next.config.mjs                # Configuration Next.js
-│    ├── postcss.config.mjs             # Configuration PostCSS
-│    ├── package.json                   # Dépendances Node.js
-│    └── pnpm-lock.yaml                 # Lock file dépendances
+│    ├── next.config.mjs                # Config Next.js (typescript, images)
+│    ├── tsconfig.json                  # Config TypeScript
+│    ├── postcss.config.mjs             # PostCSS + Tailwind
+│    ├── components.json                # Shadcn UI config
+│    ├── package.json                   # Deps (next, react, recharts, radix-ui, etc.) + scripts
+│    ├── pnpm-lock.yaml                 # Lock file pnpm
+│    └── node_modules/                  # Dependencies installées
 │
-├─── BACKEND (C + Binaire compilé)
+├─── BACKEND C (Moteur simulation)
 │    │
 │    ├── src/                           # Code source C
-│    │   ├── main.c                     # Point d'entrée, modes (--api, --parse-config, --config)
-│    │   ├── parser.c                   # Parsing fichier configuration
-│    │   ├── scheduler.c                # Moteur simulation + JSON output
-│    │   ├── generate_config.c          # Générateur configs aléatoires
-│    │   └── utils.c                    # Utilitaires C (logs, JSON, affichage)
+│    │   ├── main.c                     # Point d'entrée (modes: interactif, --api, --parse-config)
+│    │   ├── scheduler.c                # Moteur simulation + simulations (fifo_simulation, etc.)
+│    │   ├── parser.c                   # Parse fichiers config (parse_config_file)
+│    │   ├── generate_config.c          # Génère configs aléatoires (generate_config)
+│    │   └── utils.c                    # Utilitaires (display_config_file, etc.)
 │    │
 │    ├── include/                       # Headers C
-│    │   ├── process.h                  # Structure process, constantes
-│    │   ├── scheduler.h                # Prototypes moteur, statistiques
-│    │   ├── parser.h                   # Prototypes parsing
-│    │   ├── utils.h                    # Prototypes utilitaires
-│    │   └── generate_config.h          # Prototypes générateur
+│    │   ├── process.h                  # struct process, NAME_LEN, READY/RUNNING/BLOCKED/ZOMBIE
+│    │   ├── scheduler.h                # Prototypes simulations, struct simulation_result
+│    │   ├── parser.h                   # parse_config_file, validate_config
+│    │   ├── generate_config.h          # generate_config
+│    │   └── utils.h                    # display_config_file, etc.
 │    │
-│    ├── policies/                      # Implémentations algorithmes
-│    │   ├── fifo.c                     # FIFO
-│    │   ├── priority_preemptive.c      # Priority (préemptif)
-│    │   ├── roundrobin.c               # Round Robin
-│    │   ├── srt.c                      # SRT (Shortest Remaining Time)
-│    │   ├── multilevel.c               # Multilevel (statique)
-│    │   └── multilevel_dynamic.c       # Multilevel Dynamic (avec aging)
+│    ├── policies/                      # Algorithmes ordonnancement (fonctions sélection)
+│    │   ├── fifo.c                     # int fifo_scheduler(process*, int, int, int, int)
+│    │   ├── priority_preemptive.c      # int priority_preemptive(...)
+│    │   ├── roundrobin.c               # void round_robin(process*, int, int)
+│    │   ├── srt.c                      # void srt_simulation(process*, int)
+│    │   ├── multilevel.c               # int select_multilevel(...)
+│    │   └── multilevel_dynamic.c       # int select_multilevel_dynamic(...)
 │    │
 │    ├── tests/                         # Tests unitaires C
-│    │   ├── test_fifo.c, test_priority.c, test_roundrobin.c
-│    │   ├── test_multilevel.c, test_multilevel_dynamic.c
+│    │   ├── test_fifo.c
+│    │   ├── test_priority.c
+│    │   ├── test_roundrobin.c
+│    │   ├── test_multilevel.c
+│    │   ├── test_multilevel_dynamic.c
 │    │   ├── test_parser.c
 │    │   └── testfile.txt
 │    │
-│    ├── build/                         # Fichiers objets (généré par make)
-│    │   └── *.o
+│    ├── build/                         # Fichiers objets .o (généré par make)
 │    │
-│    ├── ordonnanceur                   # Binaire compilé (exécutable C)
-│    ├── ordonnanceur.exe               # Binaire Windows
-│    ├── Makefile                       # Compilation & tests
-│    └── test_*                         # Exécutables tests
+│    ├── ordonnanceur                   # Binaire Linux compilé
+│    ├── ordonnanceur.exe               # Binaire Windows cross-compilé
+│    ├── Makefile                       # Build system (all, clean, mrproper)
+│    └── test_*                         # Binaires tests unitaires (test_fifo, test_priority, etc.)
 │
 ├─── CONFIGURATION & DONNÉES
 │    │
-│    ├── config/                        # Fichiers configuration
-│    │   ├── sample_config.txt          # Exemple configuration
-│    │   └── config_*.txt               # Configs générées
-│    │
-│    └── components.json                # Configuration Shadcn UI
+│    └── config/                        # Fichiers configuration processus
+│        ├── sample_config.txt          # Exemple par défaut (7 processus)
+│        ├── config_*.txt               # Configs générées (timestamp)
+│        └── sample_config_*.txt        # Configs générées par web UI
 │
 ├─── DOCUMENTATION
 │    │
-│    ├── Documentation.md               # Documentation technique (cette doc)
-│    ├── README.md                      # Guide utilisateur + prérequis
-│    ├── INDEX.md                       # Index navigation
-│    ├── COMPLETION_SUMMARY.md          # Résumé changements
-│    ├── FINAL_REPORT.md                # Rapport validation
-│    ├── CHANGELOG_CONFORMANCE.md       # Changelog détaillé
-│    └── UPDATE_SUMMARY.md              # Résumé mises à jour
+│    ├── Documentation.md               # Documentation technique complète (ce fichier)
+│    ├── README.md                      # Guide utilisateur + install + usage
+│    ├── API_REFERENCE.md               # Référence API Next.js
+│    ├── ARCHITECTURE.md                # Architecture détaillée
+│    ├── PROFESSIONAL_README.md         # README professionnel
+│    ├── PROJECT_SUMMARY.txt            # Résumé projet
+│    ├── INDEX.md                       # Index navigation docs
+│    └── LICENSE                        # MIT License
 │
 └─── CONFIGURATION RACINE
      │
-     ├── .gitignore                     # Git ignore
-     ├── .next/                         # Cache Next.js
-     ├── .vscode/                       # Configuration VS Code
-     ├── node_modules/                  # Dépendances npm
-     ├── LICENSE                        # MIT License
-     ├── package.json                   # Dépendances Node.js + scripts
-     └── tsconfig.json                  # TypeScript config
+     ├── .git/                          # Dépôt Git local
+     ├── .gitignore                     # Ignore (node_modules, build, .next, etc.)
+     ├── .next/                         # Cache Next.js (dev/production)
+     ├── .vscode/                       # Settings VS Code
+     └── mon_test_fifo, test_multilevel, test_priority  # Tests exécutables
 ```
+
+**Dépôt GitHub** :
+- URL : `https://github.com/arijsebai/Projet-Ordonnancement-Linux.git`
+- Branch active : `dev`
+- Remote : `origin`
 
 **Structure Logique par Rôle**
 
@@ -989,214 +923,108 @@ Projet-Ordonnancement-Linux-arij-dev/
         └──────────────────────────┘
 ```
 
-### 4.3 Backend C : Mode Interactif vs Mode API
+### 4.3 Backend C : Modes d'Opération
 
-#### **Mode Interactif (CLI)**
+Le backend C (`ordonnanceur`) supporte **3 modes** :
 
-Le backend C supporte deux modes opérationnels :
+| Mode | Commande | Output | Cas d'Usage |
+|------|----------|--------|-----------|
+| **Interactif** | `./ordonnanceur` | Texte + Gantt textuel | CLI local, démo |
+| **Direct File** | `./ordonnanceur config.txt` | Texte + Gantt textuel | Scripts shell |
+| **API** | `./ordonnanceur --api --config ... --algo ...` | JSON structuré | Routes Next.js |
+| **Parse Only** | `./ordonnanceur --parse-config config.txt` | JSON array | Validation fichiers |
 
-**Mode 1: CLI Interactif (Menu)**
+**Mode API** (utilisé par frontend) :
 ```bash
-./ordonnanceur
-# OU
-./ordonnanceur [chemin_fichier_config.txt]
+./ordonnanceur --api --config sample_config.txt --algo fifo --quantum 4 --prio-order asc
 ```
 
-**Fonctionnement** :
-- Affiche un menu interactif à l'utilisateur
-- Permet de générer automatiquement des processus
-- Permet de charger un fichier de configuration existant
-- Affiche les résultats en texte sur stdout (Gantt textuel, statistiques)
-- **Mode principal pour utilisation en ligne de commande**
-
-#### **Mode API (Programmable)**
-
-```bash
-./ordonnanceur --api --config <fichier> --algo <algo> [--quantum <q>] [--prio-order <asc|desc>]
+**Output JSON** :
+```json
+{
+  "algorithm": "fifo",
+  "ganttData": [{"process":"P1","start":0,"end":5,"duration":5}, ...],
+  "processStats": [{"id":"P1","waitTime":0,"totalTime":5, ...}, ...],
+  "averageWait": 3.45,
+  "makespan": 25
+}
 ```
 
-**Fonctionnement** :
-- N'affiche QUE du JSON structuré sur stdout
-- Aucune interaction utilisateur
-- Conçu pour être appelé par des scripts ou applications
-- **Utilisé par les API routes Next.js**
+### 4.4 Intégration Frontend ↔ Backend
 
-**Flags disponibles** :
-| Flag | Valeurs | Obligatoire | Exemple |
-|------|---------|-------------|---------|
-| `--api` | N/A | ✓ | `--api` |
-| `--config` | Chemin fichier | ✓ | `--config config/sample.txt` |
-| `--algo` | fifo, priority, roundrobin, srt, multilevel, multilevel_dynamic | ✓ | `--algo roundrobin` |
-| `--quantum` | Entier > 0 | Pour RR et multilevel_dynamic | `--quantum 4` |
-| `--prio-order` | asc, desc | Pour priority | `--prio-order asc` |
-| `--parse-config` | Chemin fichier | Alternatif à --api | `--parse-config config.txt` |
+### 4.4 Intégration Frontend ↔ Backend
 
-**Mode parse-config** (cas particulier) :
-```bash
-./ordonnanceur --parse-config <fichier>
+#### Flow complet : User → React → API Route → C Backend → Results
+
 ```
-- Parse le fichier de configuration
-- Retourne UNIQUEMENT un JSON array de processus
-- Utilisé pour valider les fichiers avant simulation
+User (Browser)
+    ↓ Sélectionne algorithme + paramètres
+React Component (page.tsx)
+    ↓ POST /api/schedule avec { processes, config }
+API Route (app/api/schedule/route.ts)
+    ↓ Écrit fichier temp + spawn("./ordonnanceur --api ...")
+C Backend (ordonnanceur)
+    ↓ Parse → Simulate → JSON stdout
+API Route
+    ↓ Parse JSON + cleanup temp file
+React Component (ResultsDisplay)
+    ↓ Affiche Gantt + Charts + Table
+```
 
----
+**Routes API Next.js** :
 
-### 4.3 Intégration complète : Frontend Next.js + Backend C
+1. **POST /api/parse-config** : Upload fichier `.txt` → retourne array processes
+2. **POST /api/schedule** : Lance simulation → retourne résultats complets
 
-#### **Composants Frontend (React)**
+**Mapping algorithmes** (frontend → backend) :
 
-**1. Page principale** (`app/page.tsx`)
-- Gestion fichiers (créer processus ou charger fichier `.txt`)
-- Sélecteur algorithme avec paramètres dynamiques
-- Tableau de processus (preview, "Afficher les détails")
-- Bouton "Lancer l'Ordonnancement"
-
-**2. AlgorithmSelector** (`components/algorithm-selector.tsx`)
-- **Options disponibles** : fifo, sjf, static-priority, dynamic-priority, round-robin, multilevel, multilevel-dynamic-priority
-- **Paramètres dynamiques** :
-  - `quantum` : visible si round-robin ou multilevel-dynamic-priority
-  - `priorityOrder` : visible si static-priority ou dynamic-priority
-- Validation saisie utilisateur
-
-**3. ResultsDisplay** (`components/results-display.tsx`)
-- **Gantt chart** : timeline interactif (play/pause, zoom)
-- **Pie chart** : répartition temps total par processus
-- **Bar chart** : temps d'attente vs temps total
-- **Tableau détaillé** :
-  - Colonnes : id, arrival, execution, waitTime, totalTime, finishTime
-  - **Priorité Initiale** : toujours visible
-  - **Priorité Finale** : visible **uniquement** pour multilevel_dynamic (après aging)
-- **Palette de couleurs** : 20 couleurs distinctes + fallback HSL, déterministe par process ID
-
-#### **APIs Routes Next.js**
-
-**`POST /api/parse-config`**
-- Upload fichier `.txt`
-- Appelle `ordonnanceur --parse-config <tmpfile>`
-- Renvoie array JSON : `[{ id, arrivalTime, executionTime, priority }, ...]`
-- Utilisé pour charger un fichier existant
-
-**`POST /api/schedule`**
-- **Payload** : `{ processes: Process[], config: AlgorithmConfig }`
-- **Étapes internes** :
-  1. Écrit fichier temp (`sched_${timestamp}.txt`)
-  2. Construit CLI args : `["--api", "--config", tmpPath, "--algo", mappedAlgo, ...]`
-  3. Appelle `spawn("./ordonnanceur", args)`
-  4. Parse stdout JSON
-  5. Cleanup fichier temp
-- **Réponse** : `SchedulingResult` : `{ algorithm, ganttData[], processStats[], averageWait, makespan }`
-
-#### **Backend C (mode `--api`)**
-
-- Lit fichier config via `--config <path>`
-- Simule l'algorithme spécifié via `--algo <name>`
-- Collecte métriques dans `process_stat` (waitTime, totalTime, finishTime, **finalPriority** pour multilevel_dynamic)
-- Génère `ganttData` (timeline des allocations CPU)
-- Sortie JSON structurée sur stdout
-- Parsée immédiatement par route Next.js → envoyée au client React
+| Frontend | Backend C |
+|----------|-----------|
+| `fifo` | `fifo` |
+| `priority_preemptive` | `priority_preemptive` |
+| `round-robin` | `round-robin` |
+| `multilevel` | `multilevel` |
+| `multilevel-dynamic` | `multilevel-dynamic` |
+| `srt` | `srt` |
 
 ### 4.5 Flow d'Exécution Complet
 
-**Frontend → Backend → Frontend :**
+### 4.5 Visualisations Frontend
 
-```
-┌──────────────────────────────────┐
-│ page.tsx : Écran principal      │
-│ Sélectionner algo + paramètres  │
-│ Charger fichier ou créer        │
-│ Bouton "Lancer"                 │
-└──────────────┬───────────────────┘
-               │
-               ├─ (File upload) ──► POST /api/parse-config ──► Retour array Process[]
-               │
-               └─ (Lancer) ──────► POST /api/schedule
-                                    │
-                         ┌──────────┴────────────────┐
-                         │ app/api/schedule/route.ts │
-                         │ mapAlgorithm() function   │
-                         └──────────┬────────────────┘
-                                    │
-                    ┌───────────────┴────────────────┐
-                    │ Écrire sched_TIMESTAMP.txt    │
-                    │ Format : P id arrival exec pri │
-                    └───────────────┬────────────────┘
-                                    │
-                    ┌───────────────┴────────────────────┐
-                    │ spawn("./ordonnanceur", args)    │
-                    │ args = ["--api", "--config", ... │
-                    │         "--algo", mapped, ... ]  │
-                    └───────────────┬────────────────────┘
-                                    │
-          ┌─────────────────────────▼─────────────────────────┐
-          │ ordonnanceur (C backend)                         │
-          │ 1. Parse config via parser.c                    │
-          │ 2. Simulation (scheduler.c)                     │
-          │ 3. JSON output à stdout                         │
-          └─────────────────────────┬─────────────────────────┘
-                                    │
-                    ┌───────────────┴────────────────────┐
-                    │ Parse JSON stdout               │
-                    │ Cleanup sched_TIMESTAMP.txt    │
-                    │ Return SchedulingResult        │
-                    └───────────────┬────────────────────┘
-                                    │
-          ┌─────────────────────────▼──────────────────────┐
-          │ ResultsDisplay                                │
-          │ - Gantt chart                                │
-          │ - Pie/Bar charts                            │
-          │ - Detailed table with metrics               │
-          │ - Colors unique per process                 │
-          └───────────────────────────────────────────────┘
-```
+**Components React** :
 
-### 4.6 Mapping des Algorithmes Frontend → Backend
+1. **AlgorithmSelector** (`components/algorithm-selector.tsx`)
+   - Dropdown 6 algorithmes
+   - Paramètres dynamiques : quantum (RR, Multilevel Dynamic), priorityOrder (Priority)
 
-| Frontend Name | Backend Name | Mode | Quantum | Priority Order | Notes |
-|--|--|--|--|--|--|
-| fifo | fifo | Stateless | N/A | N/A | First In First Out |
-| sjf | srt | Stateless | N/A | N/A | Shortest Remaining Time |
-| static-priority | priority | Fixed Mode | N/A | Ascending (API défaut) | ✓ Pas d'aging dans le backend |
-| dynamic-priority | priority | Fixed Mode | N/A | Ascending (API défaut) | Même backend `priority` (pas d'aging backend) |
-| round-robin | roundrobin | Preemptive | ✓ Required | N/A | Time slice based |
-| multilevel | multilevel | Static | N/A | N/A | Multiple queues, NO migration |
-| multilevel-dynamic-priority | multilevel_dynamic | Dynamic | ✓ Optional | N/A | Queues + aging + final_priority |
+2. **ResultsDisplay** (`components/results-display.tsx`)
+   - **Gantt chart** : timeline interactif (play/pause, step, zoom)
+   - **Pie chart** : répartition CPU par processus
+   - **Bar chart** : temps attente vs temps total
+   - **Table** : stats détaillées (arrival, execution, wait, finish, priority)
+   - **Couleurs** : 20 couleurs distinctes, déterministe par process ID
 
-**Notes Importantes** :
-- ✓ `static-priority` et `dynamic-priority` **utilisent le MÊME backend** (`priority`).
-- ✓ Par défaut : **API** envoie `--prio-order asc` (petite valeur = haute prio) ; **CLI** sans flag reste en descending (valeur grande = haute prio).
-- ✓ La différence entre `static` et `dynamic` est **UI-side uniquement** (visualisation d'aging côté frontend).
-- ✓ Le backend Priority n'a PAS d'aging intégré (pas de modification de priorité avec le temps).
-- ✓ `multilevel_dynamic` a l'aging vrai **au backend** (modifications réelles des priorités).
-- ✓ Seul `multilevel_dynamic` retourne `final_priority` dans les résultats JSON.
+3. **FileGenerationDialog** (`components/file-generation-dialog.tsx`)
+   - Dialog création config (nb processus, ranges arrival/exec/priority)
 
-**Code (`app/api/schedule/route.ts` - mapping réel):**
+### 4.6 Mapping Algorithmes Frontend → Backend
 
-```typescript
-// Mode Ascending (par défaut pour priority)
-const args = ["--api", "--config", tmpPath, "--algo", "priority", "--prio-order", "asc"]
+**Correspondance noms** :
 
-// Les deux options frontend "static-priority" et "dynamic-priority" 
-// utilisent EXACTEMENT le même appel backend
-// La distinction est uniquement au niveau presentation (frontend)
-```
+| Frontend (TypeScript) | Backend C (--algo) | Fichier Policy |
+|-----------------------|--------------------|----------------|
+| `fifo` | `fifo` | `policies/fifo.c` |
+| `priority_preemptive` | `priority_preemptive` | `policies/priority_preemptive.c` |
+| `round-robin` | `round-robin` | `policies/roundrobin.c` |
+| `srt` | `srt` | `policies/srt.c` |
+| `multilevel` | `multilevel` | `policies/multilevel.c` |
+| `multilevel-dynamic` | `multilevel-dynamic` | `policies/multilevel_dynamic.c` |
 
-**CLI arguments construction:**
-```typescript
-const args = ["--api", "--config", tmpPath, "--algo", mappedAlgo]
-if (mappedAlgo === "roundrobin" || mappedAlgo === "multilevel_dynamic") {
-  args.push("--quantum", config.quantum || "4")
-}
-if (mappedAlgo === "priority") {
-  args.push("--prio-order", "asc")  // Mode défaut
-}
-```
-
-**Key Points:**
-- ✓ `static-priority` et `dynamic-priority` → appel identique `priority` au backend
-- ✓ `multilevel-dynamic-priority` seul expose colonne **Priorité Finale** (aging visible)
-- ✓ Frontend dropdown = 7 options ; Backend = 6 algos (priority compte pour 2)
-- ✓ Quantum REQUIS pour RR et multilevel_dynamic
-- ✓ JSON API output inclut `finalPriority` pour multilevel_dynamic uniquement
+**Paramètres** :
+- **quantum** : requis pour `round-robin` et `multilevel-dynamic`
+- **priorityOrder** : requis pour `priority_preemptive` (ascending/descending)
+- **prio_mode** : 0=ascending (petite valeur=haute), 1=descending (grande valeur=haute)
+- **Défaut CLI** : `prio_mode=1` (descending), **Défaut API** : `prio_mode=0` (ascending)
 
 ---
 
@@ -1287,9 +1115,9 @@ if (mappedAlgo === "priority") {
 | **Multilevel + Aging** | Ajouter un ordonnancement multi-files avec mécanisme d'aging | 8 pts | Haute | 12 h |
 | **SRT** | Version préemptive de SJF (gestion du temps restant) | 8 pts | Haute | 12 h |
 | **Génération Config** | Script/programme produisant un fichier valide automatiquement | 4 pts | Moyenne | 6 h |
-| **IHM + Gantt** | IHM basique + génération d'un diagramme de Gantt visuel | 10 pts | Moyenne | 15 h |
+| **IHM + Gantt** | IHM basique + génération d'un diagramme de Gantt visuel | 12 pts | Haute | 18 h |
 
-**Total Sprint 2** : **30 points** (**45 heures**)
+**Total Sprint 2** : **32 points** (**48 heures**)
 
 ### 5.7 Métriques SCRUM - Sprints 0, 1, 2
 
@@ -1299,8 +1127,8 @@ if (mappedAlgo === "priority") {
 |--------|----------|--------|--------|--------|
 | **Sprint 0** | Réunion de lancement | N/A | 3 | 3 |
 | **Sprint 1** | FIFO + Foundation | 34 | 50.5 | 8 |
-| **Sprint 2** | Algorithmes avancés | 30 | 45 | 4 |
-| **TOTAL** | | **64** | **98.5** | **15** |
+| **Sprint 2** | Algorithmes avancés | 32 | 48 | 4 |
+| **TOTAL** | | **66** | **101.5** | **15** |
 
 ## 6. Spécifications Techniques : Point d'Entrée, Parser et Générateur
 
@@ -1555,19 +1383,6 @@ P6 30 200 2 # Commentaire fin ligne → ignoré
 P7	40	100	1	# Tabulations acceptées
 ```
 
-#### Règles de Parsing Détaillées
-
-| Cas | Détection | Action | Exemple |
-|-----|-----------|--------|---------|
-| **Ligne vide** | Zéro caractères non-blanche | Ignorer | `\n` ou `   ` |
-| **Commentaire** | 1er caractère non-blanc = `#` | Ignorer | `# Configuration...` |
-| **Processus valide** | 4 tokens + conversions OK + valeurs acceptables | Parser struct | `P1 0 250 3` |
-| **Moins de 4 tokens** | Split retourne < 4 éléments | Warning + ignorer | `P1 0 250` (3 champs) |
-| **Champ non-numérique** | `atoi()` échoue sur token[i] | Warning + ignorer | `P1 zero 250 3` |
-| **arrival_time < 0** | `atoi(token[1]) < 0` | **Erreur fatale** | `P1 -5 250 3` |
-| **exec_time <= 0** | `atoi(token[2]) <= 0` | **Erreur fatale** | `P1 0 0 3` ou `P1 0 -10 3` |
-| **priority hors intervalle** | `atoi(token[3])` hors [0, MAX] | Warning (mode strict) ou ignorer | `P1 0 250 99` (si MAX=10) |
-
 #### Algorithme de Parsing Détaillé
 
 **Étape 1 : Initialisation**
@@ -1746,182 +1561,229 @@ Pour chaque processus i de 1 à nb_processes :
 - **Validité** : Fichier généré est automatiquement **valide** (respecte toutes les règles)
 - **Sortie** : Affichage confirmation + chemin fichier
 
+---
+
 ### 6.4 Fichiers Headers et Structures Partagées
 
-#### But
+#### Vue d'ensemble
 
-Documenter les fichiers headers (`.h`) qui définnisent les structures et prototypes partagés entre les modules C.
+Les headers C (`include/*.h`) définissent les **interfaces** et **structures de données** partagées entre tous les modules du projet. Ils assurent la **cohérence** et la **modularité** du code.
 
-#### `include/process.h`
+**Fichiers headers disponibles** :
+- `process.h` : Structure process, constantes d'état
+- `scheduler.h` : Prototypes simulations, structures résultats
+- `parser.h` : Prototypes parsing configuration
+- `generate_config.h` : Prototype générateur
+- `utils.h` : Utilitaires affichage
 
-Définit la **structure centrale** représentant un processus.
+---
 
+#### 6.4.1 process.h : Structure Cœur
+
+**Fichier** : `include/process.h`
+
+**Contenu** :
 ```c
 #ifndef PROCESS_H
 #define PROCESS_H
 
-#define NAME_LEN 64          // Longueur max du nom de processus
-#define READY 0              // État : processus prêt
-#define RUNNING 1            // État : processus en cours
-#define BLOCKED 2            // État : processus bloqué
-#define ZOMBIE 3             // État : processus terminé
+#define NAME_LEN 64
+#define READY 0
+#define RUNNING 1
+#define BLOCKED 2
+#define ZOMBIE 3
 
 struct process {
-    char name[NAME_LEN];     // Nom unique du processus (ex: "P1")
-    int arrival_time;        // Temps d'arrivée >= 0
-    int exec_time;           // Durée totale d'exécution, > 0 (immuable)
-    int priority;            // Priorité (convention Unix: petite = haute)
-    int remaining_time;      // Temps restant à exécuter (modifiable)
-    int waiting_time;        // Temps total d'attente cumulé
-    int status;              // État actuel (READY/RUNNING/BLOCKED/ZOMBIE)
-    int end_time;            // Temps de fin d'exécution (pour métriques)
-    int wait_time;           // Compteur temporaire pour aging (Multilevel)
+    char name[NAME_LEN];      // Nom processus (ex: "P1")
+    int arrival_time;         // Temps d'arrivée (≥0)
+    int exec_time;            // Durée totale requise (immuable)
+    int priority;             // Priorité statique (petite valeur = haute)
+    int remaining_time;       // Temps restant (modifiable)
+    int waiting_time;         // Temps attente cumulé
+    int status;               // État: READY(0), RUNNING(1), BLOCKED(2), ZOMBIE(3)
+    int end_time;             // Temps fin exécution (pour stats)
+    int wait_time;            // Pour aging dynamique (Multilevel)
 };
 
 #endif
 ```
 
-**Utilisation** : Inclus par `scheduler.h`, `parser.h`, et tous les fichiers de politiques.
+**Rôle** :
+- **Structure centrale** utilisée par tous les modules
+- **Constantes d'état** pour machine d'état processus
+- **Convention priorité** : petite valeur = haute priorité (Unix standard)
 
-#### `include/scheduler.h`
+---
 
-Définit les structures de **résultats de simulation** et les prototypes de fonctions de scheduling.
+#### 6.4.2 scheduler.h : Interfaces Simulation
 
+**Fichier** : `include/scheduler.h`
+
+**Contenu** :
 ```c
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#define MAX_SEGMENTS 2048    // Nombre max de segments Gantt
+#include "process.h"
+
+#define MAX_SEGMENTS 2048
 
 struct gantt_segment {
-    char process[NAME_LEN];  // Nom du processus exécuté
-    int start;               // Temps de début
-    int end;                 // Temps de fin
+    char process[NAME_LEN];   // Nom processus
+    int start;                // Temps début allocation CPU
+    int end;                  // Temps fin allocation CPU
 };
 
 struct process_stat {
-    char id[NAME_LEN];       // ID du processus
-    int arrival_time;        // Temps d'arrivée
-    int exec_time;           // Durée d'exécution totale
-    int finish_time;         // Temps de fin réel
-    int wait_time;           // Temps d'attente calculé
-    int priority;            // Priorité initiale
-    int final_priority;      // Priorité finale (Multilevel Dynamic uniquement)
+    char id[NAME_LEN];        // Nom processus
+    int arrival_time;         // Arrivée
+    int exec_time;            // Durée exécution
+    int finish_time;          // Temps fin
+    int wait_time;            // Temps attente
+    int priority;             // Priorité initiale
+    int final_priority;       // Priorité finale (multilevel_dynamic)
 };
 
 struct simulation_result {
-    char algorithm[64];                           // Nom algo exécuté
-    struct gantt_segment segments[MAX_SEGMENTS];  // Timeline CPU
-    int segment_count;                            // Nombre de segments
-    struct process_stat stats[256];               // Stats par processus
-    int stat_count;                               // Nombre de processus
-    double average_wait;                          // Temps d'attente moyen
-    int makespan;                                 // Temps total simulation
+    char algorithm[64];                      // Nom algorithme
+    struct gantt_segment segments[MAX_SEGMENTS];  // Timeline Gantt
+    int segment_count;                       // Nombre segments
+    struct process_stat stats[256];         // Stats processus
+    int stat_count;                         // Nombre processus
+    double average_wait;                    // Moyenne temps attente
+    int makespan;                           // Temps total simulation
 };
 
 struct scheduler_options {
-    const char *algorithm;   // Nom algo: "fifo", "priority", "roundrobin", "srt", "multilevel", "multilevel_dynamic"
-    int quantum;             // Quantum pour RR et multilevel_dynamic
-    int prio_mode;           // 0=ascending (Unix, défaut), 1=descending
+    const char *algorithm;   // Nom algorithme (fifo, priority, etc.)
+    int quantum;             // Quantum Round-Robin
+    int prio_mode;           // 1=descending, 0=ascending
 };
 
-// Déclarations de fonctions publiques
-void load_policies();                             // Initialise les politiques
-int choose_policy();                              // Menu sélection politique
-void run_scheduler(struct process *, int, int);  // Mode interactif
-int run_scheduler_api(struct process *, int, const struct scheduler_options *, struct simulation_result *);
-void print_json_result(const struct simulation_result *); // Output JSON
+// Prototypes
+void load_policies();
+int choose_policy();
+void run_scheduler(struct process *list, int n, int policy);
+int run_scheduler_api(struct process *list, int n, const struct scheduler_options *opts, struct simulation_result *out);
+void print_json_result(const struct simulation_result *res);
 
-// Prototypes des simulations pour chaque algorithme
-void fifo_simulation(struct process *, int);
-void priority_simulation(struct process *, int, int);    // int = prio_mode
-void rr_simulation(struct process *, int);               // Quantum dans struct process
-void multilevel_simulation(struct process *, int, int);  // int = quantum
-void multilevel_dynamic_simulation(struct process *, int, int); // int = quantum
-void srt_simulation(struct process *, int);
+// Simulations
+void fifo_simulation(struct process *p, int n);
+void priority_simulation(struct process *p, int n, int prio_mode);
+void rr_simulation(struct process *p, int n);
+void multilevel_simulation(struct process *p, int n, int quantum);
+void multilevel_dynamic_simulation(struct process *p, int n, int quantum);
+void srt_simulation(struct process *p, int n);
 
 #endif
 ```
 
-**Utilisation** : Inclus par `src/scheduler.c` (orchestrateur) et `src/main.c` (point d'entrée).
+**Rôle** :
+- **Structures résultats** pour mode API JSON
+- **Options ordonnancement** (algorithme, quantum, prio_mode)
+- **Prototypes simulations** pour tous les algorithmes
+- **Interface API** pour routes Next.js
 
-#### `include/parser.h`
+---
 
-Définit les prototypes de **parsing de fichiers** de configuration.
+#### 6.4.3 parser.h : Interface Parsing
 
+**Fichier** : `include/parser.h`
+
+**Contenu** :
 ```c
 #ifndef PARSER_H
 #define PARSER_H
 
 #include "process.h"
 
-// Parsing principal
-int parse_config_file(const char *filename, struct process **out, int *out_n);
+// Parse fichier configuration
+int parse_config_file(const char *filename, struct process **out, int *n);
 
-// Utilitaires
-void display_config_file(const char *filename);  // Affiche contenu brut fichier
-int validate_process(struct process *p);         // Valide structure processus
-
-#endif
-```
-
-**Utilisé par** : `src/main.c` et `app/api/parse-config/route.ts`.
-
-#### `include/utils.h`
-
-Définit les fonctions **utilitaires** (affichage, JSON, tableaux, etc.).
-
-```c
-#ifndef UTILS_H
-#define UTILS_H
-
-#include "scheduler.h"
-
-// Affichage Gantt textuel
-void print_gantt(struct gantt_segment *, int);
-void print_statistics(struct process_stat *, int, double, int);
-
-// Sérialisation JSON (mode API)
-void print_json_result(const struct simulation_result *);
-
-// Utilitaires mémoire
-void free_processes(struct process *);
+// Validation format
+int validate_config_line(const char *line);
 
 #endif
 ```
 
-#### `include/generate_config.h`
+**Rôle** :
+- **Parsing fichiers** configuration texte
+- **Validation** format (4 champs, types corrects)
+- **Allocation dynamique** tableau processus
 
-Définit le générateur de **configurations aléatoires**.
+---
 
+#### 6.4.4 generate_config.h : Interface Générateur
+
+**Fichier** : `include/generate_config.h`
+
+**Contenu** :
 ```c
 #ifndef GENERATE_CONFIG_H
 #define GENERATE_CONFIG_H
 
-int generate_config(const char *filename);  // filename peut inclure chemins + timestamp
+// Génère fichier config aléatoire
+int generate_config(const char *filename);
 
 #endif
 ```
 
-#### Dépendances Entre Headers
+**Rôle** :
+- **Générateur automatique** configurations
+- **Création fichiers** avec timestamp
+- **Validation automatique** (toujours valide)
+
+---
+
+#### 6.4.5 utils.h : Utilitaires
+
+**Fichier** : `include/utils.h`
+
+**Contenu** :
+```c
+#ifndef UTILS_H
+#define UTILS_H
+
+// Affiche contenu fichier configuration
+void display_config_file(const char *filename);
+
+#endif
+```
+
+**Rôle** :
+- **Affichage** fichiers configuration
+- **Utilitaires** divers (logs, debug)
+
+---
+
+#### Communication Headers ↔ Modules
 
 ```
-process.h
-    ↓
-scheduler.h ← includes process.h
-parser.h    ← includes process.h
-utils.h     ← includes scheduler.h
-generate_config.h
-    ↓
-Toutes les politiques (*.c) incluent scheduler.h
+main.c
+ ├─ #include "process.h"        → struct process
+ ├─ #include "scheduler.h"      → run_scheduler(), simulations
+ ├─ #include "parser.h"         → parse_config_file()
+ ├─ #include "generate_config.h" → generate_config()
+ └─ #include "utils.h"          → display_config_file()
+
+scheduler.c
+ ├─ #include "process.h"        → struct process
+ └─ #include "scheduler.h"      → struct simulation_result
+
+policies/fifo.c
+ └─ #include "process.h"        → struct process (définition)
+
+tests/test_fifo.c
+ └─ #include "process.h"        → struct process pour tests
 ```
 
-#### Convention de Naming
+**Avantages** :
+- ✅ **Modularité** : chaque module inclut seulement ce dont il a besoin
+- ✅ **Cohérence** : structure `process` définie une seule fois
+- ✅ **Réutilisabilité** : headers partagés entre main, tests, policies
+- ✅ **Maintenance** : modifier `process.h` → tous les modules mis à jour
 
-- **Structures** : `struct nom_descriptif` (ex: `struct process`, `struct gantt_segment`)
-- **Constantes** : `UPPER_CASE` (ex: `READY`, `NAME_LEN`, `MAX_SEGMENTS`)
-- **Fonctions** : `snake_case` (ex: `parse_config_file`, `print_gantt`, `fifo_simulation`)
-- **Fichiers** : `snake_case.h` ou `.c` (ex: `priority_preemptive.c`, `utils.c`)
+---
 
 ## 7. Makefile et Compilation
 
@@ -2045,17 +1907,6 @@ make mrproper     # Nettoyage complet
 ```
 
 **Pourquoi** : Indique à `make` que ce ne sont pas des fichiers, mais des commandes. Évite conflits si un fichier s'appelle "clean".
-
-### 7.5 Flags Compiler Expliqués
-
-| Flag | Signification | Utilité | Exemple |
-|------|--------------|---------|---------|
-| **-Wall** | "Warn All" | Affiche TOUS les warnings | Captures variables inutilisées |
-| **-Wextra** | Warnings supplémentaires | Rigueur accrue | Détecte plus de problèmes |
-| **-std=c11** | Standard C11 | Assure compatibilité | Types bool, uint64_t, etc |
-| **-I(dir)** | Include directory | Ajoute répertoire headers | `-I$(INC_DIR)` cherche dans include/ |
-
-**Note** : Le Makefile actuel n'utilise pas `-g` (debug) ni `-O2` (optimisation) par défaut.
 
 ### 7.6 Principes et Avantages
 
