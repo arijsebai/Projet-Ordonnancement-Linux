@@ -90,6 +90,21 @@
 
 ### **8. Conclusion** ................................................. [Page 31](#8-conclusion)
 
+---
+
+## Table des Figures
+
+| Figure | Description | Page |
+|--------|-------------|------|
+| **Figure 4.1** | Interface principale avec sélection d'algorithme et gestion des processus | [→](#451-interface-principale--sélection-et-configuration) |
+| **Figure 4.2** | Diagramme de Gantt avec contrôles interactifs et légende d'états | [→](#452-visualisation-gantt--timeline-dexécution-interactive) |
+| **Figure 4.3** | Suivi des états des processus au fil du temps | [→](#453-diagramme-détat-des-processus) |
+| **Figure 4.4** | Analyse de la répartition du temps CPU par processus | [→](#454-répartition-cpu--diagramme-circulaire) |
+| **Figure 4.5** | Comparaison graphique des métriques de performance | [→](#455-comparaison-statistiques--graphique-à-barres) |
+| **Figure 4.6** | Tableau statistiques avec toutes les métriques de performance | [→](#456-tableau-récapitulatif--données-détaillées) |
+| **Figure 4.7** | Interface de génération automatique de configurations | [→](#457-génération-automatique--configuration) |
+| **Figure 4.8** | Zone d'upload avec validation et aperçu des processus | [→](#458-upload-et-validation--fichier-configuration) |
+
 
 <div style="page-break-after: always;"></div>
 
@@ -109,19 +124,6 @@ Ce projet est un **simulateur d'ordonnancement de processus sous Linux** avec un
 - ✅ **Métriques complètes** : temps d'attente, temps total, finish time, makespan, CPU utilization
 - ✅ **Architecture modulaire** : ajout nouvel algorithme = 1 fichier dans `policies/`, sans modifier scheduler.c
 
-
-
-### 1.1 Galerie UI — Captures d'Écran de l'Application Web
-
-L'interface utilisateur complète et toutes les captures d'écran sont documentées en détail dans la section **4.5 Interface Utilisateur et Visualisations** avec les descriptions techniques des composants React correspondants.
-
-➜ Voir section [4.5 Interface Utilisateur et Visualisations](#45-interface-utilisateur-et-visualisations) pour :
-- 🏠 Interface principale et sélection d'algorithmes
-- 📊 Diagramme de Gantt interactif
-- 🔄 Diagramme d'état des processus
-- 📉 Graphiques statistiques (Pie Chart, Bar Chart)
-- 📋 Tableau récapitulatif complet
-- ⚙️ Génération et upload de fichiers de configuration
 
 ## 2. Choix des Structures de Données
 
@@ -1602,89 +1604,7 @@ make -d                 # Mode debug
 
 ## 8. Conclusion
 
-### 8.1 Résultats Obtenus
 
-Ce projet a permis de réaliser un **simulateur complet d'ordonnancement de processus** avec les résultats suivants :
-
-#### Objectifs Techniques Atteints
-
-✅ **6 algorithmes d'ordonnancement implémentés et fonctionnels** : FIFO, Round-Robin, Priority Preemptive, SRT, Multilevel Queue, Multilevel Feedback Queue (avec anti-famine)
-
-✅ **Architecture modulaire et extensible** : ajout d'un nouvel algorithme = 1 fichier dans `policies/`, politique de sélection encapsulée
-
-✅ **Interface web moderne et interactive** : Next.js 16 + React 19, visualisations temps réel (Gantt, Pie Chart, Bar Chart), contrôles interactifs (play/pause/step/zoom)
-
-✅ **Générateur automatique de configurations** : création fichiers de test aléatoires avec paramètres personnalisables (nb processus, ranges)
-
-✅ **Parser robuste** : validation syntaxe, gestion erreurs, support commentaires, fichiers de configuration flexibles
-
-✅ **Compilation automatisée** : Makefile avec compilation incrémentale, gestion dépendances, nettoyage sélectif
-
-✅ **Métriques complètes** : temps d'attente, turnaround time, finish time, makespan, CPU utilization
-
-### 8.2 Compétences Acquises
-
-#### A. Systèmes d'Exploitation
-
-- **Ordonnancement de processus** : compréhension approfondie des algorithmes FIFO, RR, Priority, SRT, Multilevel
-- **États des processus** : transitions READY → RUNNING → TERMINATED, gestion préemption
-- **Métriques de performance** : analyse temps d'attente, turnaround, CPU utilization
-- **Problème de famine** : implémentation solution Multilevel Feedback Queue avec aging dynamique
-
-#### B. Programmation C
-
-- **Structures de données** : tableaux dynamiques, gestion mémoire manuelle
-- **Modularité** : architecture extensible avec pointeurs de fonction
-- **Parsing** : lecture fichiers, validation syntaxe, gestion erreurs
-- **Compilation** : Makefile avancé, gestion dépendances, compilation incrémentale
-
-#### C. Développement Web Moderne
-
-- **React 19 et Next.js 16** : Server Components, App Router, streaming SSR
-- **TypeScript** : typage statique, interfaces, validation Zod
-- **Visualisations interactives** : Recharts, animations, contrôles temps réel
-- **Architecture fullstack** : API Routes, intégration backend C via spawn
-
-#### D. Méthodologie Agile
-
-- **SCRUM** : sprints, product backlog, sprint backlog, métriques
-- **Travail d'équipe** : coordination 3 développeurs, répartition tâches
-- **Documentation** : architecture, spécifications techniques, README complet
-
-### 8.3 Perspectives d'Amélioration
-
-#### Améliorations Techniques
-
-1. **Algorithmes supplémentaires** : 
-   - Completely Fair Scheduler (CFS) Linux-like
-   - Earliest Deadline First (EDF) pour temps réel
-   - Lottery Scheduling (stochastique)
-
-2. **Fonctionnalités avancées** :
-   - Support multi-cœurs (parallélisation réelle)
-   - Gestion I/O blocking (états BLOCKED réels)
-   - Context switching cost (overhead simulation)
-   - Memory management (pagination, segmentation)
-
-3. **Interface utilisateur** :
-   - Comparaison côte-à-côte de 2 algorithmes
-   - Export PDF/PNG des diagrammes
-   - Mode sombre/clair persistant
-   - Sauvegarde configurations dans LocalStorage
-
-4. **Performance** :
-   - WebAssembly pour backend C (exécution navigateur)
-   - Worker threads pour calculs lourds
-   - Caching des résultats de simulation
-
-#### Déploiement Production
-
-- **Hébergement** : Vercel (frontend) + Railway/Render (backend API)
-- **CI/CD** : GitHub Actions pour tests automatiques et déploiement
-- **Monitoring** : Sentry pour erreurs, Analytics pour usage
-- **Documentation** : GitBook ou Docusaurus pour documentation interactive
-
-### 8.4 Conclusion Finale
 
 Ce projet a permis de réaliser un **simulateur d'ordonnancement de processus pédagogique et fonctionnel**, combinant rigueur technique (backend C optimisé) et expérience utilisateur moderne (interface React interactive).
 
