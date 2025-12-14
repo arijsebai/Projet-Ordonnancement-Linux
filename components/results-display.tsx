@@ -268,7 +268,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
               disabled={isQueuePlaying || queueTime <= 0}
             >
               <StepBack className="mr-2 h-4 w-4" />
-              -1s
+              Précédent (-1s)
             </Button>
             <Button
               onClick={handleQueueNextStep}
@@ -277,56 +277,52 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
               disabled={isQueuePlaying || queueTime >= maxTime}
             >
               <StepForward className="mr-2 h-4 w-4" />
-              +1s
+              Suivant (+1s)
             </Button>
             <div className="flex items-center px-4 bg-[#500010] text-white rounded-md border border-[#500010]/60 min-w-[100px] justify-center font-mono">
               T = {queueTime}s
             </div>
           </div>
           <div className="relative mt-4 overflow-x-auto">
-            <div className="min-w-[600px] space-y-4">
+            <div className="min-w-[1100px] space-y-4">
               {}
-              <div className="flex ml-16 border-b border-gray-200 pb-2 pr-10">
-                {timeTicks.map((t, idx) => {
-                  const isLast = idx === timeTicks.length - 1
-                  return (
-                    <div
-                      key={`cpu-axis-${idx}`}
-                      className="text-[10px] text-gray-500 text-right border-r border-gray-100 h-2 relative"
-                      style={{
-                        flexBasis: `${(t - (timeTicks[idx - 1] ?? 0)) / axisEnd * 100}%`,
-                        flexGrow: 1,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <span
-                        className={`absolute -bottom-6 left-full ${isLast ? "translate-x-0" : "-translate-x-1/2"} whitespace-nowrap`}
+              <div className="relative ml-20 border-b border-gray-200 pb-2 pr-32 overflow-visible">
+                <div className="absolute inset-0">
+                  {timeTicks.map((t, idx) => {
+                    const isLast = idx === timeTicks.length - 1
+                    const leftPct = Math.min((t / axisEnd) * 100, 98)
+                    return (
+                      <div
+                        key={`cpu-axis-${idx}`}
+                        className="absolute h-2 border-r border-gray-100"
+                        style={{ left: `${leftPct}%` }}
                       >
-                        {t}
-                      </span>
-                    </div>
-                  )
-                })}
+                        <span
+                          className={`absolute -bottom-6 whitespace-nowrap text-[10px] text-gray-700 font-mono px-1 z-10 ${isLast ? "translate-x-0" : "-translate-x-1/2"}`}
+                        >
+                          {t}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="h-2" />
               </div>
 
               {}
               <div className="relative">
-                <div className="absolute inset-0 flex ml-16 pointer-events-none">
+                <div className="absolute inset-0 ml-20 pointer-events-none">
                   {timeTicks.map((t, idx) => (
                     <div
                       key={`cpu-grid-${idx}`}
-                      className="border-r border-gray-200 h-full"
-                      style={{
-                        flexBasis: `${(t - (timeTicks[idx - 1] ?? 0)) / axisEnd * 100}%`,
-                        flexGrow: 1,
-                        flexShrink: 0,
-                      }}
+                      className="absolute top-0 bottom-0 border-r border-gray-200"
+                      style={{ left: `${(t / axisEnd) * 100}%` }}
                     />
                   ))}
                 </div>
 
                 <div className="relative flex items-center h-12 mb-4">
-                  <div className="w-16 font-bold text-gray-700 flex-shrink-0">CPU</div>
+                  <div className="w-20 font-bold text-gray-700 flex-shrink-0">CPU</div>
                   <div className="flex-grow h-8 bg-gray-50 rounded-r-lg relative overflow-hidden ml-1">
                     {cpuSegments.map((seg, idx) => {
                       const visibleEnd = Math.min(seg.end, queueCurrentLimit)
@@ -354,7 +350,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
 
               {}
               <div>
-                <div className="flex items-center gap-2 mb-2 ml-16">
+                <div className="flex items-center gap-2 mb-2 ml-20">
                   <div className="w-3 h-3 rounded-sm bg-gray-400" />
                   <span className="text-sm text-gray-700">File d'attente (processus prêts mais non en CPU)</span>
                 </div>
@@ -448,51 +444,47 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
             </div>
           </div>
           <div className="relative mt-4 overflow-x-auto">
-            <div className="min-w-[600px] space-y-4">
+            <div className="min-w-[1100px] space-y-4">
               {}
-              <div className="flex ml-20 border-b border-gray-200 pb-2 pr-10">
-                {timeTicks.map((t, idx) => {
-                  const isLast = idx === timeTicks.length - 1
-                  return (
-                    <div
-                      key={idx}
-                      className="text-xs text-gray-500 text-right border-r border-gray-100 h-2 relative"
-                      style={{
-                        flexBasis: `${(t - (timeTicks[idx - 1] ?? 0)) / axisEnd * 100}%`,
-                        flexGrow: 1,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <span
-                        className={`absolute -bottom-6 left-full ${isLast ? "translate-x-0" : "-translate-x-1/2"} whitespace-nowrap`}
+              <div className="relative ml-20 border-b border-gray-200 pb-2 pr-32 overflow-visible">
+                <div className="absolute inset-0">
+                  {timeTicks.map((t, idx) => {
+                    const isLast = idx === timeTicks.length - 1
+                    const leftPct = Math.min((t / axisEnd) * 100, 98)
+                    return (
+                      <div
+                        key={idx}
+                        className="absolute h-2 border-r border-gray-100"
+                        style={{ left: `${leftPct}%` }}
                       >
-                        {t}
-                      </span>
-                    </div>
-                  )
-                })}
+                        <span
+                          className={`absolute -bottom-6 whitespace-nowrap text-xs text-gray-700 font-mono px-1 z-10 ${isLast ? "translate-x-0" : "-translate-x-1/2"}`}
+                        >
+                          {t}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="h-2" />
               </div>
 
               {}
               <div className="relative">
                 {}
-                <div className="absolute inset-0 flex ml-20 pointer-events-none">
+                <div className="absolute inset-0 ml-20 pointer-events-none">
                   {timeTicks.map((t, idx) => (
                     <div
                       key={`major-${idx}`}
-                      className="border-r border-gray-200 h-full"
-                      style={{
-                        flexBasis: `${(t - (timeTicks[idx - 1] ?? 0)) / axisEnd * 100}%`,
-                        flexGrow: 1,
-                        flexShrink: 0,
-                      }}
+                      className="absolute top-0 bottom-0 border-r border-gray-200"
+                      style={{ left: `${(t / axisEnd) * 100}%` }}
                     />
                   ))}
 
                   {minorTicks.map((t, idx) => (
                     <div
                       key={`minor-${idx}`}
-                      className="border-r border-dashed border-gray-100 h-full"
+                      className="absolute top-0 bottom-0 border-r border-dashed border-gray-100"
                       style={{ left: `${(t / axisEnd) * 100}%` }}
                     />
                   ))}
