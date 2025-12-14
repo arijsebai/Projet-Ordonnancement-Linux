@@ -12,6 +12,8 @@
 ### Mini-Projet : Systèmes d'Exploitation  
 ### Octobre - Décembre 2025
 
+**Encadré par : Madame Yosra Najjar**
+
 <br><br><br>
 
 ---
@@ -1232,7 +1234,9 @@ L'application web offre une interface moderne et interactive pour simuler et vis
 | **Sprint 2** | Algorithmes avancés | 32 | 48 | 4 |
 | **TOTAL** | | **66** | **101.5** | **15** |
 
-## 6. Spécifications Techniques : Point d'Entrée, Parser et Générateur
+## 6. Spécifications Techniques
+
+**Portée** : Point d'Entrée, Parser et Générateur
 
 ### 6.1 Point d'Entrée (main.c) : Modes Interactif et API
 
