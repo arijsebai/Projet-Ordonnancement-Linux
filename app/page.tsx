@@ -21,7 +21,7 @@ export default function Page() {
   const [loadingDefault, setLoadingDefault] = useState(true)
   const [currentFileName, setCurrentFileName] = useState<string>("sample_config.txt")
 
-  // Load default sample config on mount
+  
   useEffect(() => {
     const loadDefaultConfig = async () => {
       try {
@@ -116,7 +116,7 @@ export default function Page() {
   return (
     <div className="min-h-screen p-8 bg-background">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
+        {}
         <div className="text-center space-y-4">
           <h1 className="text-5xl font-bold text-white drop-shadow-md">Ordonnancement des Processus</h1>
           <p className="text-white/80 text-lg">
@@ -126,7 +126,7 @@ export default function Page() {
 
         {!results ? (
           <div className="grid gap-8 lg:grid-cols-2">
-            {/* File Selection Card */}
+            {}
             <Card className="bg-white border-white/20 shadow-xl">
               <CardHeader>
                 <CardTitle className="text-2xl flex items-center gap-2 text-black">
@@ -202,7 +202,7 @@ export default function Page() {
               </CardContent>
             </Card>
 
-            {/* Algorithm Selection Card */}
+            {}
             <Card className="bg-white border-white/20 shadow-xl">
               <CardHeader>
                 <CardTitle className="text-2xl text-black">Configuration de l'Algorithme</CardTitle>
@@ -217,7 +217,7 @@ export default function Page() {
           </div>
         ) : null}
 
-        {/* Launch Button */}
+        {}
         {!results && (
           <div className="flex justify-center">
             <Button
@@ -232,11 +232,11 @@ export default function Page() {
           </div>
         )}
 
-        {/* Results Display */}
+        {}
         {results && <ResultsDisplay results={results} onReset={() => setResults(null)} />}
       </div>
 
-      {/* File Generation Dialog */}
+      {}
       <FileGenerationDialog open={showFileDialog} onOpenChange={setShowFileDialog} onGenerate={handleGenerateFile} />
     </div>
   )

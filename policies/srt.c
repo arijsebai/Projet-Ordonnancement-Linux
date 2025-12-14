@@ -8,7 +8,7 @@ void srtf(struct process *procs, int n) {
     struct process *p = malloc(n * sizeof(struct process));
     memcpy(p, procs, n * sizeof(struct process));
 
-    // Initialiser
+    
     for (int i = 0; i < n; i++) {
         p[i].remaining_time = p[i].exec_time;
         p[i].end_time = -1;
@@ -22,7 +22,7 @@ void srtf(struct process *procs, int n) {
     printf("----  -----------  --------------------------------\n");
 
     while (completed < n) {
-        // 1. Trouver le processus avec le temps restant le plus court parmi ceux arrivés
+        
         int best = -1;
         int min_rem = 999999;
 
@@ -36,14 +36,14 @@ void srtf(struct process *procs, int n) {
             }
         }
 
-        // 2. Aucun processus prêt → IDLE
+        
         if (best == -1) {
             printf("%4d  [IDLE]       []\n", time);
             time++;
             continue;
         }
 
-        // 3. Affichage : état au début de l'unité de temps
+        
         printf("%4d  %-8s    [", time, p[best].name);
 
         int first = 1;
@@ -58,18 +58,18 @@ void srtf(struct process *procs, int n) {
         }
         printf("]\n");
 
-        // 4. Exécuter 1 unité de temps
+        
         p[best].remaining_time--;
         time++;
 
-        // 5. Si terminé → marquer
+        
         if (p[best].remaining_time == 0) {
             p[best].end_time = time;
             completed++;
         }
     }
 
-    // === STATISTIQUES FINALES (identique à Round-Robin) ===
+    
     printf("\nFINAL STATISTICS\n");
     printf("Name  Arrival  Exec  Finish  Wait\n");
     printf("----  -------  ----  ------  ----\n");

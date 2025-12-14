@@ -4,7 +4,7 @@
 int select_multilevel_dynamic(struct process *procs, int n, int time, int current, int quantum_expired) {
     int best_prio = -1;
 
-    // 1. Trouver la plus haute priorité parmi les processus PRÊTS
+    
     int processes_ready = 0;
     for (int i = 0; i < n; i++) {
         if (procs[i].arrival_time <= time && procs[i].remaining_time > 0) {
@@ -15,9 +15,9 @@ int select_multilevel_dynamic(struct process *procs, int n, int time, int curren
         }
     }
 
-    if (!processes_ready) return -1; // Personne n'est prêt
+    if (!processes_ready) return -1; 
 
-    // 2. Logique Round-Robin pour la priorité 'best_prio'
+    
     
     if (current != -1 && 
         procs[current].remaining_time > 0 && 

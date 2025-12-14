@@ -15,19 +15,19 @@ static void usage(void) {
 }
 
 int main(int argc, char **argv) {
-    char filename[256] = "";       // Full path
+    char filename[256] = "";       
     char buffer[32];
-    int choice = 1;  // Default: generate configuration
-    int direct_file_mode = 0;     // If user provides a file directly as first arg
+    int choice = 1;  
+    int direct_file_mode = 0;     
 
-    /* CLI flags to support JSON/API mode */
+    
     int api_mode = 0;
     int parse_only = 0;
     char algo[64] = "fifo";
     int quantum = 2;
-    int prio_mode = 1; // 1 = descending (default)
+    int prio_mode = 1; 
 
-    // If user provides a file path as the first argument (not a flag), use it directly
+    
     if (argc == 2 && argv[1][0] != '-') {
         strncpy(filename, argv[1], sizeof(filename) - 1);
         filename[sizeof(filename) - 1] = '\0';
@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    // If a file was provided directly, skip the interactive menu
+    
     if (!direct_file_mode) {
         printf("=== Scheduler Project ===\n");
         printf("1) Generate configuration file automatically  (default)\n");
@@ -119,13 +119,13 @@ int main(int argc, char **argv) {
         }
 
         if (choice == 1) {
-            // Use timestamp to generate unique name
+            
             time_t t = time(NULL);
             struct tm *tm_info = localtime(&t);
             char timestamp[32];
             strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", tm_info);
 
-            // Prepare full path in config folder with .txt extension
+            
             snprintf(filename, sizeof(filename), "config/sample_config_%s.txt", timestamp);
 
             printf("\n➡ Generating configuration file: %s\n", filename);
@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
         else {
             printf("Enter configuration file name (with path if needed): ");
             scanf("%255s", filename);
-            // Clear stdin buffer after scanf
+            
             int c; while ((c = getchar()) != '\n' && c != EOF);
         }
     }

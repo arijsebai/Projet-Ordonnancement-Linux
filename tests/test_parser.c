@@ -1,18 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>    /* for unlink, close */
-#include <fcntl.h>     /* for mkstemp */
+#include <unistd.h>    
+#include <fcntl.h>     
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include "../include/process.h"
 
-/* Prototype du parseur (implémentation dans src/parser.c) */
+
 int parse_config(const char *path, struct process **out, int *out_n);
 
 int main(int argc, char **argv) {
-    if (argc < 2) return 1; /* attend un chemin de fichier en argument */
+    if (argc < 2) return 1; 
 
     const char *path = argv[1];
     struct process *procs = NULL;

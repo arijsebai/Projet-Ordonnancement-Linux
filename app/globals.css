@@ -4,10 +4,10 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated background to burgundy red and adjusted foreground for contrast */
+  
   --background: oklch(0.35 0.1 20);
   --foreground: oklch(0.985 0 0);
-  /* Cards are now light/white to support black text as requested */
+  
   --card: oklch(0.985 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(0.985 0 0);
@@ -27,7 +27,7 @@
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
-  /* Added specific pink and green colors for charts */
+  
   --chart-pink: oklch(0.7 0.25 350);
   --chart-green: oklch(0.85 0.2 140);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -45,10 +45,10 @@
 }
 
 .dark {
-  /* Dark mode also uses burgundy background but darker */
+  
   --background: oklch(0.25 0.1 20);
   --foreground: oklch(0.985 0 0);
-  /* Cards remain light in this specific design request to support black text */
+  
   --card: oklch(0.95 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(0.145 0 0);
@@ -82,7 +82,7 @@
 }
 
 @theme inline {
-  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
+  
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -139,7 +139,7 @@
   }
 }
 
-/* Custom scrollbar */
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

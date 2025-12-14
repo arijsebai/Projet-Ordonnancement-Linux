@@ -1,10 +1,10 @@
 #include "../include/process.h"
 
-int global_prio_mode = 1;  // 1 = descending, 0 = ascending
+int global_prio_mode = 1;  
 
-// Retourne l'index du processus à exécuter à cet instant pour Priority Preemptive
+
 int priority_preemptive(struct process *procs, int n, int time, int current, int prio_mode) {
-    (void)current; // pas utilisé
+    (void)current; 
     global_prio_mode = prio_mode;
 
     int best = -1;
@@ -20,6 +20,6 @@ int priority_preemptive(struct process *procs, int n, int time, int current, int
         }
     }
 
-    return best; // -1 si aucun processus prêt
+    return best; 
 }
 

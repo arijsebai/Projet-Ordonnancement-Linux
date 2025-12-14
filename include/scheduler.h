@@ -18,7 +18,7 @@ struct process_stat {
 	int finish_time;
 	int wait_time;
 	int priority;
-	int final_priority; /* For multilevel_dynamic */
+	int final_priority; 
 };
 
 struct simulation_result {
@@ -34,7 +34,7 @@ struct simulation_result {
 struct scheduler_options {
 	const char *algorithm;
 	int quantum;
-	int prio_mode; /* 1 = descending, 0 = ascending */
+	int prio_mode; 
 };
 
 void load_policies();
@@ -43,7 +43,7 @@ void run_scheduler(struct process *list, int n, int policy);
 int run_scheduler_api(struct process *list, int n, const struct scheduler_options *opts, struct simulation_result *out);
 void print_json_result(const struct simulation_result *res);
 
-/* Simulations */
+
 void fifo_simulation(struct process *p, int n);
 void priority_simulation(struct process *p, int n, int prio_mode);
 void rr_simulation(struct process *p, int n);

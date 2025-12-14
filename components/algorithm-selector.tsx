@@ -90,7 +90,7 @@ export function AlgorithmSelector({ config, onChange }: AlgorithmSelectorProps) 
         </div>
       )}
 
-      {/* multilevel uses quantum; no extra level parameter required for current backend */}
+      {}
     </div>
   )
 }

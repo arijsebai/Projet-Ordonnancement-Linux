@@ -40,19 +40,20 @@ const WAIT_TIME_COLOR = "#00008B"
 const TOTAL_TIME_COLOR = "#006400"
 
 export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
-  const maxTime = Math.max(results.makespan ?? 0, ...results.ganttData.map((g) => g.end), 1)
+  const boundaries = Array.from(
+    new Set([
+      0,
+      ...(results.ganttData ?? []).flatMap((g) => [g.start, g.end]),
+      results.makespan ?? 0,
+    ])
+  )
+    .filter((v) => v >= 0)
+    .sort((a, b) => a - b)
 
-  const buildTicks = (max: number) => {
-    if (max <= 0) return { ticks: [0], end: 0 }
-    const step = Math.max(1, Math.ceil(max / 10))
-    const ticks: number[] = []
-    const end = Math.ceil(max / step) * step
-    for (let t = 0; t <= end; t += step) ticks.push(t)
-    if (ticks[ticks.length - 1] !== max) ticks.push(max)
-    return { ticks, end: ticks[ticks.length - 1] }
-  }
-  const { ticks: timeTicks, end: axisEnd } = buildTicks(maxTime)
+  const axisEnd = boundaries[boundaries.length - 1] || 1
+  const timeTicks = boundaries.length > 0 ? boundaries : [0, axisEnd]
   const minorTicks: number[] = []
+  const maxTime = axisEnd
 
   const [currentTime, setCurrentTime] = useState(maxTime)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -234,7 +235,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
         </div>
       </div>
 
-      {/* Diagramme d'occupation CPU et file d'attente (placé en premier) */}
+      {}
       <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-xl w-full">
         <CardHeader>
           <CardTitle className="text-black">Diagramme de Gantt</CardTitle>
@@ -284,7 +285,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
           </div>
           <div className="relative mt-4 overflow-x-auto">
             <div className="min-w-[600px] space-y-4">
-              {/* En-tete temps */}
+              {}
               <div className="flex ml-16 border-b border-gray-200 pb-2 pr-10">
                 {timeTicks.map((t, idx) => {
                   const isLast = idx === timeTicks.length - 1
@@ -308,7 +309,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
                 })}
               </div>
 
-              {/* Ligne CPU */}
+              {}
               <div className="relative">
                 <div className="absolute inset-0 flex ml-16 pointer-events-none">
                   {timeTicks.map((t, idx) => (
@@ -351,7 +352,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
                 </div>
               </div>
 
-              {/* File d'attente */}
+              {}
               <div>
                 <div className="flex items-center gap-2 mb-2 ml-16">
                   <div className="w-3 h-3 rounded-sm bg-gray-400" />
@@ -398,7 +399,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
         </CardContent>
       </Card>
 
-      {/* Gantt Chart */}
+      {}
       <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-xl">
         <CardHeader>
           <CardTitle className="text-black">Diagramme de l'état des processus</CardTitle>
@@ -448,7 +449,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
           </div>
           <div className="relative mt-4 overflow-x-auto">
             <div className="min-w-[600px] space-y-4">
-              {/* Time grid header */}
+              {}
               <div className="flex ml-20 border-b border-gray-200 pb-2 pr-10">
                 {timeTicks.map((t, idx) => {
                   const isLast = idx === timeTicks.length - 1
@@ -472,9 +473,9 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
                 })}
               </div>
 
-              {/* Process Rows */}
+              {}
               <div className="relative">
-                {/* Background Grid Lines */}
+                {}
                 <div className="absolute inset-0 flex ml-20 pointer-events-none">
                   {timeTicks.map((t, idx) => (
                     <div
@@ -504,12 +505,12 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
 
                 {uniqueProcesses.map((processId, index) => (
                   <div key={processId} className="relative flex items-center h-12 mb-2 group">
-                    {/* Process Label */}
+                    {}
                     <div className="w-20 font-bold text-gray-700 flex-shrink-0">{processId}</div>
 
-                    {/* Execution Timeline Track */}
+                    {}
                     <div className="flex-grow h-8 bg-gray-50 rounded-r-lg relative overflow-hidden ml-1">
-                      {/* Waiting intervals as translucent bands (same shape as execution bars) */}
+                      {}
                       {waitingSegments.get(processId)?.map((w, idx) => {
                         const leftPercent = (w.start / axisEnd) * 100
                         const widthPercent = ((w.end - w.start) / axisEnd) * 100
@@ -535,7 +536,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
                       {results.ganttData
                         .filter((item) => item.process === processId)
                         .map((item, idx) => {
-                          if (item.start >= currentTime) return null // Future block
+                          if (item.start >= currentTime) return null 
 
                           const isFinished = item.end <= currentTime
                           const visibleDuration = isFinished ? item.duration : currentTime - item.start
@@ -548,7 +549,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
                               className="absolute top-1 bottom-1 rounded shadow-md flex items-center justify-center text-xs text-white font-medium hover:brightness-110 transition-all cursor-pointer z-10"
                               style={{
                                 left: `${leftPercent}%`,
-                                width: `${Math.max(widthPercent, 0)}%`, // Ensure valid width
+                                width: `${Math.max(widthPercent, 0)}%`, 
                                 backgroundColor: colorFor(processId),
                               }}
                               title={`${item.process}: ${item.start}s - ${item.end}s (Durée: ${item.duration}s)`}
@@ -576,7 +577,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
       </Card>
 
       <div className="space-y-8">
-        {/* Tableau d'abord */}
+        {}
         <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-xl w-full">
           <CardHeader>
             <CardTitle className="text-black">Tableau Détaillé des Processus</CardTitle>
@@ -638,7 +639,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
           </CardContent>
         </Card>
 
-        {/* Bar Chart */}
+        {}
         <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-xl w-full">
           <CardHeader>
             <CardTitle className="text-black">Statistiques par Processus</CardTitle>
@@ -685,7 +686,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
           </CardContent>
         </Card>
 
-        {/* Pie Chart en dernier */}
+        {}
         <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-xl w-full">
           <CardHeader>
             <CardTitle className="text-black">Distribution du Temps Total</CardTitle>
@@ -709,7 +710,7 @@ export function ResultsDisplay({ results, onReset }: ResultsDisplayProps) {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    outerRadius={150} // Increased radius
+                    outerRadius={150} 
                     fill="#8884d8"
                     dataKey="value"
                   >

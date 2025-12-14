@@ -5,17 +5,17 @@
 #include "../include/scheduler.h"
 #include "../include/process.h"
 
-/* ==== PROTOTYPES DES POLITIQUES ==== */
+
 extern int fifo_scheduler(struct process *, int, int, int, int);
 extern int priority_preemptive(struct process *, int, int, int, int);
 extern void round_robin(struct process *, int, int);
 extern void srt_simulation(struct process *, int);
 
-/* Tes nouveaux algos */
+
 extern int select_multilevel(struct process *, int, int, int, int);
 extern int select_multilevel_dynamic(struct process *, int, int, int, int);
 
-/* ==== LISTE DES POLITIQUES ==== */
+
 typedef struct {
     char name[100];
 } Policy;
@@ -23,9 +23,7 @@ typedef struct {
 Policy policies[20];
 int policy_count = 0;
 
-/* ============================================================
-   Helpers for API/JSON mode
-   ============================================================ */
+
 static void copy_processes(struct process *dst, const struct process *src, int n) {
     memcpy(dst, src, (size_t)n * sizeof(struct process));
 }
@@ -40,7 +38,7 @@ static void reset_process(struct process *p) {
 static void add_segment(struct simulation_result *res, const char *name, int start, int duration) {
     if (duration <= 0 || res->segment_count >= MAX_SEGMENTS) return;
 
-    /* Merge with previous segment if same process and contiguous */
+    
     if (res->segment_count > 0) {
         struct gantt_segment *last = &res->segments[res->segment_count - 1];
         if (strcmp(last->process, name) == 0 && last->end == start) {
@@ -70,9 +68,9 @@ static void fill_stats_from_processes(const struct process *p, int n, struct sim
         s->exec_time = p[i].exec_time;
         s->finish_time = p[i].end_time;
         s->wait_time = p[i].end_time - p[i].arrival_time - p[i].exec_time;
-        /* priority = valeur initiale si fournie, sinon la priorité actuelle */
+        
         s->priority = initial_priorities ? initial_priorities[i] : p[i].priority;
-        s->final_priority = p[i].priority; /* Default to current; multilevel_dynamic overrides later */
+        s->final_priority = p[i].priority; 
         total_wait += s->wait_time;
         if (p[i].end_time > makespan) makespan = p[i].end_time;
     }
@@ -116,9 +114,7 @@ void print_json_result(const struct simulation_result *res) {
     printf(",\"averageWait\":%.2f,\"makespan\":%d}\n", res->average_wait, res->makespan);
 }
 
-/* ============================================================
-   ==========     CHARGEMENT DYNAMIQUE DES POLITIQUES     =====
-   ============================================================ */
+
 void load_policies() {
     DIR *d = opendir("policies");
     if (!d) {
@@ -136,7 +132,7 @@ void load_policies() {
     closedir(d);
 }
 
-/* ===================== MENU ====================== */
+
 int choose_policy() {
     printf("\n=== Choisir une politique ===\n");
 
@@ -160,11 +156,9 @@ int choose_policy() {
     return c;
 }
 
-/* ============================================================
-                  SIMULATIONS DES POLITIQUES
-   ============================================================ */
 
-/* ---------------- FIFO ---------------- */
+
+
 void fifo_simulation(struct process *p, int n) {
     printf("\n=== FIFO ===\n");
     printf("Time  Executing     Ready Queue\n");
@@ -193,7 +187,7 @@ void fifo_simulation(struct process *p, int n) {
         }
         printf("]\n");
 
-        // Execute one second at a time and track waiting
+        
         p[idx].remaining_time--;
         for (int i = 0; i < n; i++) {
             if (i != idx && p[i].arrival_time <= time && p[i].remaining_time > 0)
@@ -227,13 +221,13 @@ void fifo_simulation(struct process *p, int n) {
 }
 
 
- /* ---------------- PRIORITY ---------------- */
+ 
 void priority_simulation(struct process *p, int n, int mode) {
     printf("\n=== PRIORITY ===\n");
     printf("Time  Executing     Ready Queue\n");
     printf("----  -----------  -----------------------------\n");
 
-    // Reinitialize metrics
+    
     for (int i = 0; i < n; i++) {
         p[i].remaining_time = p[i].exec_time;
         p[i].end_time = 0;
@@ -276,7 +270,7 @@ void priority_simulation(struct process *p, int n, int mode) {
         }
     }
 
-    // Stats
+    
     printf("\nFINAL STATISTICS\n");
     printf("Name  Arrival  Exec  Finish  Wait\n");
 
@@ -296,7 +290,7 @@ void priority_simulation(struct process *p, int n, int mode) {
 }
 
 
-/* ---------------- ROUND ROBIN ---------------- */
+
 void rr_simulation(struct process *p, int n) {
     int q;
     printf("Quantum: ");
@@ -305,9 +299,7 @@ void rr_simulation(struct process *p, int n) {
 }
 
 
-/* ============================================================
-                        MULTI-LEVEL
-   ============================================================ */
+
 void multilevel_simulation(struct process *procs, int n, int quantum) {
     int finished = 0, time = 0;
     int current = -1;
@@ -359,9 +351,9 @@ void multilevel_simulation(struct process *procs, int n, int quantum) {
         time++;
     }
 
-    // Stats
+    
     printf("\nFINAL STATISTICS\n");
-    /* <-- MODIF : on affiche aussi la priorité finale ici */
+    
     printf("Name  Arrival  Exec  Finish  Wait  Priority\n");
     float tw = 0;
     int makespan = 0;
@@ -371,7 +363,7 @@ void multilevel_simulation(struct process *procs, int n, int quantum) {
                procs[i].name, procs[i].arrival_time,
                procs[i].exec_time, procs[i].end_time,
                procs[i].waiting_time,
-               procs[i].priority); /* ← priorité finale affichée */
+               procs[i].priority); 
         tw += procs[i].waiting_time;
         if (procs[i].end_time > makespan) makespan = procs[i].end_time;
     }
@@ -381,9 +373,7 @@ void multilevel_simulation(struct process *procs, int n, int quantum) {
 }
 
 
- /* ============================================================
-                    MULTI-LEVEL DYNAMIC
-   ============================================================ */
+ 
 
 void multilevel_dynamic_simulation(struct process *procs, int n, int quantum) {
     int finished = 0, time = 0;
@@ -416,10 +406,10 @@ void multilevel_dynamic_simulation(struct process *procs, int n, int quantum) {
         }
         printf("]\n");
 
-        /* Aging dynamique */
+        
         for (int i = 0; i < n; i++) {
             if (i != idx && procs[i].arrival_time <= time && procs[i].remaining_time > 0) {
-                procs[i].priority++;       // montée dynamique
+                procs[i].priority++;       
                 procs[i].waiting_time++;
             }
         }
@@ -440,7 +430,7 @@ void multilevel_dynamic_simulation(struct process *procs, int n, int quantum) {
         time++;
     }
 
-    /* === STATISTIQUES FINALES AVEC PRIORITÉ === */
+    
     float total_wait = 0;
     int makespan = 0;
 
@@ -455,7 +445,7 @@ void multilevel_dynamic_simulation(struct process *procs, int n, int quantum) {
                procs[i].exec_time,
                procs[i].end_time,
                wait,
-               procs[i].priority);  // ← ← ICI NOUVELLE PRIORITÉ
+               procs[i].priority);  
         total_wait += wait;
 
         if (procs[i].end_time > makespan)
@@ -468,9 +458,7 @@ void multilevel_dynamic_simulation(struct process *procs, int n, int quantum) {
 
 
 
- /* ============================================================
-                     CHOIX DE LA POLITIQUE
-   ============================================================ */
+ 
 void run_scheduler(struct process *list, int n, int policy) {
 
     if (strstr(policies[policy].name, "fifo"))
@@ -506,11 +494,11 @@ void run_scheduler(struct process *list, int n, int policy) {
     }
 }
 void srt_simulation(struct process *procs, int n) {
-    // Create a copy to avoid modifying original processes
+    
     struct process *p = malloc(n * sizeof(struct process));
     memcpy(p, procs, n * sizeof(struct process));
 
-    // Initialize remaining time and end time
+    
     for (int i = 0; i < n; i++) {
         p[i].remaining_time = p[i].exec_time;
         p[i].end_time = -1;
@@ -528,7 +516,7 @@ void srt_simulation(struct process *procs, int n) {
         int idx = -1;
         int min_rem = 999999;
 
-        // Find process with shortest remaining time that has arrived
+        
         for (int i = 0; i < n; i++) {
             if (p[i].arrival_time <= time && p[i].remaining_time > 0) {
                 if (idx == -1 || p[i].remaining_time < min_rem ||
@@ -540,13 +528,13 @@ void srt_simulation(struct process *procs, int n) {
         }
 
         if (idx == -1) {
-            // No process ready → IDLE
+            
             printf("%4d  [IDLE]       []\n", time);
             time++;
             continue;
         }
 
-        // Print executing process and ready queue
+        
         printf("%4d  %-8s    [", time, p[idx].name);
         int first = 1;
         for (int i = 0; i < n; i++) {
@@ -558,24 +546,24 @@ void srt_simulation(struct process *procs, int n) {
         }
         printf("]\n");
 
-        // Execute 1 unit of time
+        
         p[idx].remaining_time--;
         time++;
 
-        // If finished
+        
         if (p[idx].remaining_time == 0) {
             p[idx].end_time = time;
             completed++;
         }
 
-        // Increase waiting time for other ready processes
+        
         for (int i = 0; i < n; i++) {
             if (i != idx && p[i].arrival_time <= time && p[i].remaining_time > 0)
                 p[i].waiting_time++;
         }
     }
 
-    // Final statistics
+    
     printf("\nFINAL STATISTICS\n");
     printf("Name  Arrival  Exec  Finish  Wait\n");
 
@@ -598,9 +586,7 @@ void srt_simulation(struct process *procs, int n) {
     free(p);
 }
 
-/* ============================================================
-   Silent simulations for API/JSON mode
-   ============================================================ */
+
 static void fifo_simulation_collect(const struct process *src, int n, struct simulation_result *res) {
     struct process *p = malloc((size_t)n * sizeof(struct process));
     if (!p) return;
@@ -797,7 +783,7 @@ static void multilevel_dynamic_simulation_collect(const struct process *src, int
     int initial_priorities[256];
     for (int i = 0; i < n; i++) {
         reset_process(&p[i]);
-        initial_priorities[i] = p[i].priority; // capture priorité initiale avant aging
+        initial_priorities[i] = p[i].priority; 
     }
 
     int finished = 0, time = 0;
@@ -840,7 +826,7 @@ static void multilevel_dynamic_simulation_collect(const struct process *src, int
         time++;
     }
 
-    /* Fill stats and set final_priority for multilevel_dynamic */
+    
     fill_stats_from_processes(p, n, res, initial_priorities);
     for (int i = 0; i < res->stat_count; i++) {
         res->stats[i].final_priority = p[i].priority;

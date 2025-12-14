@@ -1,14 +1,14 @@
 #include <stdio.h>
 
-/* Vide le buffer stdin pour éviter les lectures résiduelles */
+
 void clear_buffer(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF) {
-        /* discard */
+        
     }
 }
 
-/* Affiche un fichier de configuration pour aider au debug */
+
 void display_config_file(const char *filename) {
     FILE *f = fopen(filename, "r");
     if (!f) {

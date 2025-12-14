@@ -1,10 +1,10 @@
 #include "../include/process.h"
 #include <limits.h>
 
-// Retourne l'index du processus à exécuter à cet instant pour FIFO
+
 int fifo_scheduler(struct process *procs, int n, int time, int current, int prio_mode) {
-    (void)current;  // pas utilisé
-    (void)prio_mode; // pas utilisé
+    (void)current;  
+    (void)prio_mode; 
 
     int best_index = -1;
     int earliest_arrival = INT_MAX;
@@ -18,6 +18,6 @@ int fifo_scheduler(struct process *procs, int n, int time, int current, int prio
         }
     }
 
-    return best_index; // -1 si aucun processus prêt
+    return best_index; 
 }
 

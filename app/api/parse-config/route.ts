@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     const contentType = req.headers.get("content-type") || ""
     let configPath: string | null = null
 
-    // Vérifier si c'est du FormData (fichier uploadé) ou du JSON (fichier par défaut)
+    
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData()
       const file = formData.get("file") as File

@@ -1,14 +1,14 @@
-// tests/test_roundrobin_hardcoded.c
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../include/process.h"
 
-// Fonction Round-Robin depuis policies/roundrobin.c
+
 void round_robin(struct process *procs, int n, int quantum);
 
 int main() {
-    // === PROCESSES ===
+    
     struct process procs[] = {
         {"P1", 0, 4, 3, 4, 0, 0, -1},
         {"P2", 1, 3, 1, 3, 0, 0, -1},
@@ -18,7 +18,7 @@ int main() {
     };
     int n = 5;
 
-    // === DISPLAY PROCESSES TABLE ===
+    
     printf("\n╔══════════════════════════════════════════════════════════════╗\n");
     printf("║ PROCESSES                                                    ║\n");
     printf("╚══════════════════════════════════════════════════════════════╝\n");
@@ -30,7 +30,7 @@ int main() {
     }
     printf("\n");
 
-    // === QUANTUM INPUT ===
+    
     int quantum = 2;
     printf("╔══════════════════════════════════════════════════════════════╗\n");
     printf("║ ENTER QUANTUM FOR ROUND-ROBIN                                ║\n");
@@ -47,13 +47,13 @@ int main() {
     }
     printf("\n Selected quantum: %d\n\n", quantum);
 
-    // === INITIALIZE REMAINING TIME ===
+    
     for (int i = 0; i < n; i++) {
         procs[i].remaining_time = procs[i].exec_time;
         procs[i].end_time = -1;
     }
 
-    // === SIMULATION (GANTT CHART) ===
+    
     printf("╔══════════════════════════════════════════════════════════════╗\n");
     printf("║ SIMULATION (GANTT CHART)                                     ║\n");
     printf("╚══════════════════════════════════════════════════════════════╝\n");
@@ -62,9 +62,9 @@ int main() {
 
     round_robin(procs, n, quantum);
 
-    // === FINAL STATISTICS (déjà affiché dans round_robin) ===
-    // On ne le refait pas ici pour éviter doublon
-    // Mais on peut ajouter un message final si besoin
+    
+    
+    
 
     printf("\nSimulation completed successfully.\n");
     return 0;

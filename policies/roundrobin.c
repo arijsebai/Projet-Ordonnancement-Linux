@@ -26,17 +26,17 @@ void round_robin(struct process *procs, int n, int quantum) {
     printf("----  -----------  -----------------------------\n");
 
     while (completed < n) {
-        // Add newly arrived processes to ready queue
+        
         for (int i = 0; i < n; i++) {
             if (p[i].arrival_time == time && p[i].remaining_time > 0) {
                 ready[tail++] = i;
             }
         }
 
-        // If current process quantum expired or finished, pick next from queue
+        
         if (current_idx == -1 || quantum_counter >= quantum || p[current_idx].remaining_time == 0) {
             if (current_idx != -1 && p[current_idx].remaining_time > 0) {
-                // Re-queue current process
+                
                 ready[tail++] = current_idx;
             }
 
@@ -54,7 +54,7 @@ void round_robin(struct process *procs, int n, int quantum) {
             continue;
         }
 
-        // Display executing process and ready queue
+        
         printf("%4d  %-8s    [", time, p[current_idx].name);
         int first = 1;
         for (int j = head; j < tail; j++) {
@@ -64,18 +64,18 @@ void round_robin(struct process *procs, int n, int quantum) {
         }
         printf("]\n");
 
-        // Execute one second
+        
         p[current_idx].remaining_time--;
         quantum_counter++;
 
-        // Update waiting time for all ready processes
+        
         for (int j = head; j < tail; j++) {
             p[ready[j]].waiting_time++;
         }
 
         time++;
 
-        // Check if process finished
+        
         if (p[current_idx].remaining_time == 0) {
             p[current_idx].end_time = time;
             completed++;
@@ -84,14 +84,14 @@ void round_robin(struct process *procs, int n, int quantum) {
         }
     }
 
-    // STATISTIQUES
+    
     printf("\nFINAL STATISTICS\n");
     printf("Name  Arrival  Exec  Finish  Wait\n");
     float total_wait = 0;
     int makespan = 0;
     for (int i = 0; i < n; i++) {
         int finish = p[i].end_time;
-        int wait = finish - p[i].arrival_time - p[i].exec_time;  // Formule exacte
+        int wait = finish - p[i].arrival_time - p[i].exec_time;  
         printf("%-4s  %7d  %4d  %6d  %4d\n", p[i].name, p[i].arrival_time, p[i].exec_time, finish, wait);
         total_wait += wait;
         if (finish > makespan) makespan = finish;

@@ -7,7 +7,7 @@ int select_multilevel_dynamic(struct process *procs, int n, int time, int curren
 
 int compare_priority_desc(const void *a, const void *b) {
     const struct process *pa = a, *pb = b;
-    // Plus grande priorité en premier
+    
     if (pb->priority != pa->priority) {
         return pb->priority - pa->priority;
     }
@@ -15,7 +15,7 @@ int compare_priority_desc(const void *a, const void *b) {
 }
 
 int main() {
-    // === CONFIGURATION ===
+    
     int quantum;
     printf("\n=== Simulation Multilevel Dynamique (Pénalité) ===\n");
     printf("Entrez la valeur du Quantum : ");
@@ -24,7 +24,7 @@ int main() {
         printf("Valeur invalide. Défaut Q=2.\n");
     }
 
-    // === PROCESSUS HARDCODÉS ===
+    
     struct process procs[] = {
         {"P1", 0, 8, 4, 8, 0, 0, -1},
         {"P2", 1, 2, 4, 2, 0, 0, -1},
@@ -34,7 +34,7 @@ int main() {
     };
     int n = 5;
 
-    // === AFFICHAGE TABLEAU INITIAL ===
+    
     printf("\n╔══════════════════════════════════════════════════════════════╗\n");
     printf("║         PROCESSUS (DONNÉES INITIALES DYNAMIQUES)             ║\n");
     printf("╚══════════════════════════════════════════════════════════════╝\n");
@@ -46,7 +46,7 @@ int main() {
     }
     printf("\n");
 
-    // Init Simulation
+    
     for (int i = 0; i < n; i++) {
         procs[i].remaining_time = procs[i].exec_time;
         procs[i].status = 0;
@@ -57,12 +57,12 @@ int main() {
     struct process ready[100];
     int ready_n;
 
-    // Variables de gestion
+    
     int current_proc = -1;
     int quantum_counter = 0;
     int quantum_expired = 0;
 
-    // === SIMULATION (GANTT) ===
+    
     printf("╔══════════════════════════════════════════════════════════════╗\n");
     printf("║           SIMULATION DYNAMIQUE (TABLEAU GANTT)               ║\n");
     printf("║      (Prio baisse de 1 si le quantum est consommé)           ║\n");
@@ -71,19 +71,19 @@ int main() {
     printf("  ─────  ─────────   ────   ───────────────────────────────────\n");
 
     while (completed < n) {
-        // 1. Arrivées
+        
         for (int i = 0; i < n; i++) {
             if (procs[i].arrival_time == time && procs[i].status == 0) {
                 procs[i].status = 1;
             }
         }
 
-        // 2. Vérification du Quantum et PÉNALITÉ DYNAMIQUE
+        
         if (current_proc != -1 && quantum_counter >= quantum) {
             quantum_expired = 1;
             
             if (procs[current_proc].priority > 1) {
-                procs[current_proc].priority--; // Baisse de 1
+                procs[current_proc].priority--; 
             }
             
             quantum_counter = 0; 
@@ -97,7 +97,7 @@ int main() {
             quantum_counter = 0;
         }
 
-        // 5. Affichage Gantt
+        
         printf("  %5d  %-9s   %2d     [", time, 
                next != -1 ? procs[next].name : "IDLE",
                next != -1 ? procs[next].priority : 0);
@@ -114,14 +114,14 @@ int main() {
         }
         printf("]\n");
 
-        // 6. Exécution
+        
         if (next != -1) {
             procs[next].remaining_time--;
             quantum_counter++;
 
             if (procs[next].remaining_time == 0) {
                 procs[next].end_time = time + 1;
-                procs[next].status = 2; // Terminé
+                procs[next].status = 2; 
                 completed++;
                 
                 current_proc = -1;
@@ -136,7 +136,7 @@ int main() {
         time++;
     }
 
-    // === STATISTIQUES FINALES ===
+    
     printf("\n╔══════════════════════════════════════════════════════════════╗\n");
     printf("║                       STATISTIQUES FINALES                   ║\n");
     printf("╚══════════════════════════════════════════════════════════════╝\n");

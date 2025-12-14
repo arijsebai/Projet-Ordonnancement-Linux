@@ -7,17 +7,17 @@
 #define BLOCKED 2
 #define ZOMBIE 3
 
-/* Structure décrivant un processus */
+
 struct process {
     char name[NAME_LEN];
-    int arrival_time;    /* date d'arrivée (unités de temps, >=0) */
-    int exec_time;   /* durée totale CPU requise (unités) */
-    int priority;   /* priorité statique (plus petit = plus prioritaire) */
-    int remaining_time;  /* temps restant (utilisé par ordonnanceurs) */
+    int arrival_time;    
+    int exec_time;   
+    int priority;   
+    int remaining_time;  
     int waiting_time;
     int status;
     int end_time;
-    int wait_time;   // pour aging dynamique
+    int wait_time;   
 };
 
 #endif 
