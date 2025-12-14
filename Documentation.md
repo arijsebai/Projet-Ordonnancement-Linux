@@ -38,8 +38,6 @@
 
 </div>
 
-<div style="page-break-after: always;"></div>
-
 <div align="center">
 
 ## Table des Matières
