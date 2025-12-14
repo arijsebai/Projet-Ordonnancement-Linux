@@ -801,7 +801,6 @@ Calculer :
 | **VS Code** | Latest | IDE principal | Léger, plugins C/TypeScript/Git |
 | **Git** | 2.x | Contrôle version | Collaboration, historique |
 | **GitHub** | Cloud | Dépôt hébergé | Collaboration équipe, CI/CD |
-| **ESLint** | 8.x (optionnel) | Linting JS | Qualité code (voir README) |
 
 #### E. Architecture & Infrastructure
 
