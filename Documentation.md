@@ -1615,10 +1615,4 @@ L'architecture modulaire facilite l'extension future, et la documentation compl�
 
 Le projet démontre la maîtrise de compétences variées : systèmes d'exploitation, programmation système en C, développement web fullstack moderne, et méthodologie Agile SCRUM.
 
----
 
-**Documentation Technique Complète**  
-**Projet Ordonnanceur Multitâche de Processus sous Linux**  
-**Version 1.0 - Décembre 2025**  
-
-© Équipe de Développement - Mini-Projet Systèmes d'Exploitation 
