@@ -29,7 +29,7 @@
 
 <br><br>
 
-**L'Institut séperieur d'informatique à Ariana**  
+**L'Institut supérieur d'informatique à Ariana**  
 1ING3
 
 <br><br><br><br><br><br>
@@ -60,11 +60,19 @@
    - 3.6 Multilevel Feedback Queue (Dynamique)
 
 ### **4. Technologies et Architecture** ........................... [Page 19](#4-technologies-et-architecture)
-   - 4.1 Choix des Technologies
-   - 4.2 Architecture du Projet  
-   - 4.3 Backend C : Mode Interactif vs Mode API
-   - 4.4 Intégration complète : Frontend Next.js + Backend C
-   - 4.5 Flow d'Exécution Complet
+   - 4.1 Stack Technologique Complet
+   - 4.2 Architecture du Dépôt Git
+   - 4.3 Backend C : Modes d'Opération
+   - 4.4 Intégration Frontend ↔ Backend
+   - 4.5 Interface Utilisateur et Visualisations
+      - 4.5.1 Interface Principale — Sélection et Configuration
+      - 4.5.2 Visualisation Gantt — Timeline d'Exécution Interactive
+      - 4.5.3 Diagramme d'État des Processus
+      - 4.5.4 Répartition CPU — Diagramme Circulaire
+      - 4.5.5 Comparaison Statistiques — Graphique à Barres
+      - 4.5.6 Tableau Récapitulatif — Données Détaillées
+      - 4.5.7 Génération Automatique — Configuration
+      - 4.5.8 Upload et Validation — Fichier Configuration
 
 ### **5. Déroulement du Développement SCRUM** ................... [Page 30](#5-déroulement-du-développement-scrum)
    - 5.1 Organisation Équipe
@@ -84,9 +92,8 @@
    - 7.2 Variables Principales
    - 7.3 Règles Principales
    - 7.4 Déclaration PHONY
-   - 7.5 Flags Compiler Expliqués
-   - 7.6 Principes et Avantages
-   - 7.7 Utilisation Pratique
+   - 7.5 Principes et Avantages
+   - 7.6 Utilisation Pratique
 
 ### **8. Conclusion** ................................................. [Page 41](#8-conclusion)
 
@@ -854,7 +861,7 @@ Runtime  : Node.js 20.19.6 (frontend)
 
 ```
 Projet-Ordonnancement-Linux/
-[github.com/arijsebai/Projet-Ordonnancement-Linux • branch: dev]
+[github.com/arijsebai/Projet-Ordonnancement-Linux • branch: main]
 
 ├── 🎨 FRONTEND (Next.js 16 / React 19 / TS)
 │   ├── app/                        # App Router (pages + API routes)
